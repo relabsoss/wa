@@ -1,0 +1,12 @@
+{application, wa,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { wa_app, []}},
+  {env, []}
+ ]}.
