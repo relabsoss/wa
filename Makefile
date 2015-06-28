@@ -61,10 +61,10 @@ pub: $(REBAR)
 	@$(REBAR) generate
 
 run:
-	erl +A 4 -set_cookie $(COOKIE) -config priv/sys -pa ebin edit deps/*/ebin -boot start_sasl -sname $(APPNAME)@localhost -s $(APPNAME) -s sync
+	erl +A 4 -set_cookie $(COOKIE) -config priv/sys -pa ebin edit deps/*/ebin -boot start_sasl -sname $(APPNAME)@localhost -s $(APPNAME) 
 
 run-local:
-	erl +A 4 -set_cookie $(COOKIE) -config priv/local.sys -pa ebin edit deps/*/ebin -boot start_sasl -sname $(APPNAME)@localhost -s $(APPNAME) 
+	erl +A 4 -set_cookie $(COOKIE) -config priv/local.sys -pa ebin edit deps/*/ebin -boot start_sasl -sname $(APPNAME)@localhost -s $(APPNAME) -s sync
 
 mibs: $(MIBS) 
 	mv *.bin $(MIB_PATH)

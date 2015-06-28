@@ -5,8 +5,7 @@
 -include("wa.hrl").
 -include_lib("deps/alog/include/alog.hrl").
 
--define(HOST, "www.google.com").
--define(URL, "/recaptcha/api/verify").
+-define(URL, "http://www.google.com/recaptcha/api/verify").
 
 
 check(IP, Values) ->
@@ -22,24 +21,15 @@ check(IP, Values) ->
 
 
 api_call(Key, IP, Challenge, Response) ->
-    Body = << 
-            <<"privatekey=">>/binary, 
-            Key/binary, 
-            <<"&remoteip=">>/binary, 
-            IP/binary, 
-            <<"&challenge=">>/binary, 
-            Challenge/binary, 
-            <<"&response=">>/binary, 
-            Response/binary
-        >>,
-    {ok, Conn} = shotgun:open(?HOST, 80),
-    {ok, Response} = shotgun:post(Conn, ?URL, [
-            {"Content-Type", "application/x-www-form-urlencoded;"},                    
-            {"Content-Length", byte_size(Body)}
-            ], Body, #{}),
-    case maps:get(status_code, Response) of
-        200 ->
-            case string:tokens(maps:get(body, Response), "\n") of
+    case restc:request(post, percent, ?URL, [200], [],
+            [
+                {<<"privatekey">>, Key},
+                {<<"remoteip">>, IP}, 
+                {<<"challenge">>, Challenge}, 
+                {<<"response">>, Response}
+            ]) of
+        {ok, _Status, _Headers, Body} ->
+            case string:tokens(Body, "\n") of
                 ["true"] -> true;
                 ["true", _] -> true;
                 ["false", Reason] ->
@@ -49,8 +39,7 @@ api_call(Key, IP, Challenge, Response) ->
                     ?ERROR("Unknown server reply: ~p", [Any]),
                     false
             end;
-        Status ->
-            ?ERROR("Server error status: ~p", [Status]),
+        Error ->
+            ?ERROR("Server error: ~p", [Error]),
             false
-    end,
-    shotgun:close(Conn).
+    end.

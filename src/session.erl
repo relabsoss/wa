@@ -2,6 +2,7 @@
 -behaviour(gen_server).
 
 -export([check/1, process/3, random/0, pwd_to_db_pwd/1, smd5/1]).
+-export([social/3]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
@@ -21,9 +22,12 @@ check(SID) ->
             {Pid, {NewSID, ?SHORT_SESSION}}
     end.
 
-
 process(Pid, Path, Req) ->
     gen_server:call(Pid, {process, Path, Req}).
+
+social(Provider, Props, Req) ->
+    ?INFO("Provider ~p, props ~p", [Provider, Props]),
+    Req.
 
 %
 % external
@@ -319,7 +323,7 @@ strip(S) ->
     re:replace(S, "[<>&/]+", "", [global,{return, binary}]).
 
 pwd_to_db_pwd(MD5Bin) ->
-    smd5(<<MD5Bin/binary, ?SALT/binary>>).
+    smd5(<<MD5Bin/binary, (?CONFIG(salt, <<"deadbeef">>))/binary>>).
 
 plain_pwd_to_db_pwd(Bin) when is_binary(Bin) ->
     plain_pwd_to_db_pwd(binary_to_list(Bin));
