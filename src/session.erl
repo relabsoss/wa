@@ -2,33 +2,38 @@
 -behaviour(gen_server).
 
 -export([check/1, process/3, random/0, pwd_to_db_pwd/1, smd5/1]).
--export([social/3]).
+-export([social/3, current/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
 -include_lib("deps/alog/include/alog.hrl").
 
 
-check(SID) ->
+check(Req) ->
+    {SID, Req1} = cowboy_req:cookie(?SIDC, Req, undefined),
     try ?LOOKUP(SID) of 
         Pid ->
-            ?DEBUG("Find pid - ~p", [Pid]),
-            Timeout = gen_server:call(Pid, timer),
-            {Pid, {SID, Timeout}}    
+            Expire = gen_server:call(Pid, timer),
+            Req2 = cowboy_req:set_resp_cookie(?SIDC, SID, [{max_age, Expire}, {path, "/"}], Req1),
+            {ok, Req2, Pid}
     catch 
-        error:_ ->
+        _:_ ->
             NewSID = random(),
             {ok, Pid} = start([NewSID]),
-            {Pid, {NewSID, ?SHORT_SESSION}}
+            Req2 = cowboy_req:set_resp_cookie(?SIDC, NewSID, [{max_age, ?SHORT_SESSION}, {path, "/"}], Req1),
+            {ok, Req2, Pid}
     end.
 
 process(Pid, Path, Req) ->
     gen_server:call(Pid, {process, Path, Req}).
 
 social(Provider, Props, Req) ->
-    ?INFO("Provider ~p, props ~p", [Provider, Props]),
-    Req.
+    {ok, Req1, Pid} = check(Req),
+    gen_server:call(Pid, {social, Provider, Props, Req}).
 
+current(Pid, URL) ->
+    gen_server:cast(Pid, {current, URL}).
+    
 %
 % external
 %
@@ -49,7 +54,8 @@ init([SID]) ->
         mail => undefined,
         info => [],
         fail_count => 0,
-        token => <<>> }}.
+        token => <<>>,
+        current_page => <<"/">> }}.
 
 %
 % gen_server
@@ -72,9 +78,20 @@ handle_call({process, Path, Req}, _From, State) ->
     {ok, Timer} = timer:kill_after(?S2MS(maps:get(timer, NewState))),    
     {reply, {Reply, NewReq}, NewState#{ time_to_die := Timer }};
 
+handle_call({social, Provider, Props, Req}, _From, State) ->
+    {ok, cancel} = timer:cancel(maps:get(time_to_die, State)),
+    {NewReq, NewState} = pass_social(Provider, Props, Req, State),
+    {ok, Timer} = timer:kill_after(?S2MS(maps:get(timer, NewState))),    
+    {reply, NewReq, NewState#{ time_to_die := Timer }};
+
 handle_call(_Msg, _From, State) -> 
     {reply, ok, State}.
 
+
+handle_cast({current, URL}, State) ->
+    {ok, cancel} = timer:cancel(maps:get(time_to_die, State)),
+    {ok, Timer} = timer:kill_after(?S2MS(maps:get(timer, State))),    
+    {noreply, State#{ current_page := URL, time_to_die := Timer }};
 
 handle_cast(_Msg, State) -> {noreply, State}.
 handle_info(_Info, State) -> {noreply, State}.
@@ -314,6 +331,28 @@ update_password(Mail, Info, Pwd, Req, State) ->
                     end
             end
     end.
+
+%
+% social
+%
+
+pass_social(Provider, Props, Req, State) ->
+    A = maps:get(auth, State),
+    {URL, NewState} = case social:fetch(Provider, Props) of
+        {ok, UserInfo} when A ->
+            % link
+            {maps:get(current_page, State), State};
+        {ok, UserInfo} when not(A) ->
+            % login || reg
+            ?INFO("UI: ~p", [UserInfo]),
+            {<<"/">>, State};
+        Error ->
+            {<<"/">>, State}
+    end,
+    {ok, Req1} = cowboy_req:reply(302, [{<<"location">>, URL}], <<>>, Req),
+    {Req1, NewState}.
+
+
 
 %
 % local

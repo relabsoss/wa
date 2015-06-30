@@ -1,7 +1,8 @@
 -module(persist).
 
--export([init_db/1]).
+-export([init_db/1, init_db/2]).
 -export([check_user/2, get_user/3, add_user/5, update_user/3, del_user/2]).
+-export([]).
 
 -include_lib("deps/alog/include/alog.hrl").
 
@@ -12,7 +13,7 @@
 %
 
 init_db(Pool) ->
-    [init_db(I, Pool) || I <- [1]].
+    [init_db(I, Pool) || I <- [1, 2]].
 
 init_db(1, Pool) ->
     persist_pgsql:ql(Pool, [
@@ -29,7 +30,24 @@ init_db(1, Pool) ->
                 );",
             "CREATE INDEX users_mail_en_idx ON users(mail, en);",
             "CREATE INDEX users_mail_pass_en_idx ON users(mail, pass, en);"
+         ]);
+init_db(2, Pool) ->
+    persist_pgsql:ql(Pool, [
+            %
+            % Social
+            %
+            "CREATE TABLE users_social (
+                    id varchar(256) PRIMARY KEY,
+                    mail varchar(128),
+                    title varchar(256),
+                    token varchar(256),
+                    en boolean NOT NULL DEFAULT TRUE,
+                    atime timestamp DEFAULT current_timestamp
+                );",
+            "CREATE INDEX users_social_mail_idx ON users_social(mail, en);",
+            "CREATE INDEX users_social_id_mail_en_idx ON users_social(id, mail, en);"
          ]).
+
 
 %
 % user's ops
@@ -68,4 +86,9 @@ update_user(Pool, Mail, Pass) ->
 
 del_user(Pool, Mail) ->
     persist_pgsql:qe(Pool, "UPDATE users SET en=FALSE WHERE mail=$1;", [Mail]).
+
+%
+% social's op
+%
+
 

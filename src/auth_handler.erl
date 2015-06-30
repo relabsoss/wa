@@ -8,10 +8,7 @@
 
 
 init({tcp, http}, Req, _Opts) ->
-    {SID, Req2} = cowboy_req:cookie(?SIDC, Req, undefined),
-    {Pid, {NewSID, Expire}} = session:check(SID),
-    Req3 = cowboy_req:set_resp_cookie(?SIDC, NewSID, [{max_age, Expire}, {path, "/"}], Req2),
-    {ok, Req3, Pid}.
+    session:check(Req).
 
 handle(Req, Pid) ->
     {PathInfo, Req2} = cowboy_req:path_info(Req),
