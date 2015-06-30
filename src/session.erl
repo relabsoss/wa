@@ -29,7 +29,7 @@ process(Pid, Path, Req) ->
 
 social(Provider, Props, Req) ->
     {ok, Req1, Pid} = check(Req),
-    gen_server:call(Pid, {social, Provider, Props, Req}).
+    gen_server:call(Pid, {social, Provider, Props, Req1}).
 
 current(Pid, URL) ->
     gen_server:cast(Pid, {current, URL}).
@@ -341,17 +341,64 @@ pass_social(Provider, Props, Req, State) ->
     {URL, NewState} = case social:fetch(Provider, Props) of
         {ok, UserInfo} when A ->
             % link
+            Mail = persist:has_social_link(pgdb, maps:get(id, UserInfo)),
+            Op = case Mail of
+                none -> add_social_link;
+                _ -> update_social_link
+            end,
+            persist:Op(pgdb, maps:get(mail, State), UserInfo),
             {maps:get(current_page, State), State};
         {ok, UserInfo} when not(A) ->
             % login || reg
-            ?INFO("UI: ~p", [UserInfo]),
-            {<<"/">>, State};
+            UpState = case persist:has_social_link(pgdb, maps:get(id, UserInfo)) of
+                none ->
+                    Mail = maps:get(mail, UserInfo),
+                    case persist:get_user(pgdb, Mail) of
+                        none ->
+                            case persist:add_user(pgdb, Mail, maps:get(fname, UserInfo), 
+                                    maps:get(lname, UserInfo), "none") of
+                                {ok, 1} ->
+                                    ?SUB(Mail),
+                                    persist:add_social_link(pgdb, Mail, UserInfo),
+                                    State#{ 
+                                        auth := true,
+                                        mail := Mail, 
+                                        info := [{fname, maps:get(fname, UserInfo)}, 
+                                                 {lname, maps:get(lname, UserInfo)}],
+                                        timer := ?LONG_SESSION };
+                                _ ->
+                                    State
+                            end;    
+                        {_, FName, LName} ->
+                            ?SUB(Mail),
+                            persist:add_social_link(pgdb, Mail, UserInfo),
+                            State#{ 
+                                auth := true,
+                                mail := Mail, 
+                                info := [{fname, FName}, {lname, LName}],
+                                timer := ?LONG_SESSION }
+                    end;
+                Mail ->    
+                    case persist:get_user(pgdb, Mail) of
+                        {_, FName, LName} ->            
+                            ?SUB(Mail),
+                            persist:update_social_link(pgdb, Mail, UserInfo),
+                            State#{ 
+                                auth := true,
+                                mail := Mail, 
+                                info := [{fname, FName}, {lname, LName}],
+                                timer := ?LONG_SESSION };
+                        _ ->
+                            State
+                    end
+            end,
+            {maps:get(current_page, UpState), UpState};
         Error ->
+            ?ERROR("Error in fetching social data ~p", [Error]),
             {<<"/">>, State}
     end,
     {ok, Req1} = cowboy_req:reply(302, [{<<"location">>, URL}], <<>>, Req),
     {Req1, NewState}.
-
 
 
 %
