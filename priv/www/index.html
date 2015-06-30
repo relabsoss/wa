@@ -9,23 +9,24 @@
       .vat { vertical-align: top; }
       .hide { display: none !important; }
       .brick { margin-bottom: 5pt; }
+      .hat { margin-top: 25pt; }
     </style> 
   </head>
   <body>
-    <div class="ui fixed main menu">
-      <div class="ui page grid">
-        <div class="one wide column">
-          <a class="popup icon github item" data-content="View project on GitHub" href="https://github.com/mkrentovskiy/wa">
-            <i class="alternate github icon"></i>
-          </a>
-        </div>
-        <div class="four wide column">
-          <div class="item">
-            <div id="statusbox" class="ui label">...</div>
-          </div>                    
-        </div>
+    <div class="ui page one column centered grid">
+      <div class="column hat">
+        <h1>Application <div id="statusbox" class="floating ui label">...</div></h1>
       </div>
-        </div>
+      <div class="column">
+        <a href="/oauth/facebook/login" class="ui facebook button">
+          <i class="facebook icon"></i> Facebook
+        </a>
+        <a href="/oauth/google/login" class="ui google plus button">
+          <i class="google plus icon"></i> Google+
+        </a>
+        <a href="/oauth/vk/login" class="ui vk button">
+          <i class="vk icon"></i> VK
+        </a>
       </div>
     </div>
 

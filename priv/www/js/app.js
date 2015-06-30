@@ -50,7 +50,7 @@
     */
 
     function ui_init() {};
-    function ui_status(t, s) { $("#statusbox").attr("class", "ui " + t + " label").text(s).show(); }
+    function ui_status(t, s) { $("#statusbox").attr("class", "floating ui " + t + " label").text(s).show(); }
 
 })(window.jQuery);
 $(document).ready(function() { $.app.init(); });

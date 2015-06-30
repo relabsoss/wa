@@ -109,15 +109,15 @@ check(Options, Req) ->
                         {<<"grant_type">>, <<"authorization_code">>}
                     ]) of
                 {ok, _Status, _Headers, Body} ->
-                    case maps:is_key(error, Body) of
-                        false ->
+                    case proplists:get_value(error, Body, undefined) of
+                        undefined ->
                             {ok, #{
-                                access_token => maps:get(<<"access_token">>, Body, <<>>),
-                                token_type => maps:get(<<"token_type">>, Body, <<"bearer">>),
-                                refresh_token => maps:get(<<"refresh_token">>, Body, undefined)
+                                access_token => proplists:get_value(<<"access_token">>, Body, <<>>),
+                                token_type => proplists:get_value(<<"token_type">>, Body, <<"bearer">>),
+                                refresh_token => proplists:get_value(<<"refresh_token">>, Body, undefined)
                             }, Req1};
-                        true ->
-                            ?ERROR("Error in OAuth access tocken request ~p", [Body]),
+                        Error ->
+                            ?ERROR("Error in OAuth access tocken request ~p", [Error]),
                             {error, Req1}
                     end;
                 Any ->
