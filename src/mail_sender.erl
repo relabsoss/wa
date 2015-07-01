@@ -20,11 +20,14 @@ start_link(Params) ->
 
 init(Params) ->
     Priv = wa_app:priv_dir(),
-    lists:map(fun({Fn, Module}) -> 
+    Subjects = lists:map(fun({Fn, Module, SModule}) -> 
             File = lists:concat([Priv, "/templates/mail/", Fn, ".dtl"]),
-            {ok, _} = erlydtl:compile_file(File, Module, [{auto_escape, false}])
+            {ok, _} = erlydtl:compile_file(File, Module, [{auto_escape, false}]),
+            SFile = lists:concat([Priv, "/templates/mail/subject/", Fn, ".dtl"]),
+            {ok, _} = erlydtl:compile_file(SFile, SModule, [{auto_escape, false}]),
+            {Module, SModule}
         end, ?TEMPLATES),
-    {ok, Params}.
+    {ok, Params#{ subjects => Subjects }}.
 
 %
 % gen_server
@@ -35,11 +38,32 @@ handle_call(_Msg, _From, State) ->
 
 
 handle_cast({mail, To, Template, Params}, State) ->
-    {ok, UBody} = Template:render(Params ++ [{mail_to, To}, {domain, maps:get(domain, State)}]),
-    Body = binary_to_list(iolist_to_binary(UBody)),
+    URL = binary_to_list(maps:get(url, State)),
+    Domain = maps:get(domain, State),
+    From = maps:get(from, State),
+    MParams = Params ++ [{mail_to, To}, {domain, Domain}],
 
-    % TODO: send via MailGun
-
+    STemplate = proplists:get_value(Template, maps:get(subjects, State)),
+    {ok, USubject} = STemplate:render(MParams),
+    Subject = iolist_to_binary(USubject),
+    
+    {ok, UBody} = Template:render(MParams),
+    Body = iolist_to_binary(UBody),
+    
+    Base64 = base64:encode("api:" ++ binary_to_list(maps:get(priv_key, State))),
+    case restc:request(post, percent, URL, [200], 
+            [{<<"Authorization">>, <<"Basic ", Base64/binary>>}], 
+            [
+                {<<"from">>, From},
+                {<<"to">>, To},
+                {<<"subject">>, Subject},
+                {<<"text">>, Body} 
+             ]) of
+        {ok, _, _, Resp} ->
+            ?INFO("Send mail to ~p with response ~p", [To, Resp]);
+        Error ->
+            ?ERROR("Can't send mail to ~p - ~p", [To, Error])
+    end,
     {noreply, State};
 
 handle_cast(_Msg, State) -> 
@@ -51,3 +75,4 @@ handle_info(_Info, State) ->
 
 terminate(_Reason, _State) -> ok.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
+

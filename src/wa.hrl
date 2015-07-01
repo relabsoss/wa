@@ -57,6 +57,6 @@
 -define(RECAPTCHA_KEY, <<"">>).
 
 -define(TEMPLATES, [
-        {"reg", template_reg},
-        {"reset", template_reset}
+        {"reg", template_reg, template_reg_subject},
+        {"reset", template_reset, template_reset_subject}
     ]).
