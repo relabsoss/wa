@@ -17,11 +17,12 @@ fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = Props) 
                     Id = proplists:get_value(<<"id">>, Resp, <<>>),
                     Mail = proplists:get_value(<<"email">>, Resp, <<>>),
                     Name = proplists:get_value(<<"name">>, Resp, <<>>),
+                    {FName, LName} = split(Name),
                     {ok, #{
                         id => <<Id/binary, "@facebook.com">>,
                         mail => Mail,
-                        fname => Name,
-                        lname => <<"">>,
+                        fname => FName,
+                        lname => LName,
                         title => Name,
                         token => Token
                     }};
@@ -43,11 +44,12 @@ fetch(<<"google">>, #{ access_token := Token, token_type := Prefix } = Props) ->
                     Id = proplists:get_value(<<"id">>, Resp, <<>>),
                     Mail = proplists:get_value(<<"email">>, Resp, <<>>),
                     Name = proplists:get_value(<<"name">>, Resp, <<>>),
+                    {FName, LName} = split(Name),
                     {ok, #{
                         id => <<Id/binary, "@google.com">>,
                         mail => Mail,
-                        fname => Name,
-                        lname => <<"">>,
+                        fname => FName,
+                        lname => LName,
                         title => Name,
                         token => Token
                     }};
@@ -88,3 +90,21 @@ fetch(<<"vk">>, #{ access_token := Token, token_type := Prefix } = Props) ->
             ?ERROR("Can't make facebook user info request ~p", [Error]),
             Error
     end.
+
+%
+% Local
+% 
+
+split(Title) ->
+    case re:split(Title, " ", [{return, binary}]) of 
+        [N] -> {N, <<"">>};
+        [N1, N2] -> {N1, N2};
+        L -> [N2|T] = lists:reverse(L), T1 = lists:reverse(T), {concat(T1), N2}
+    end.
+
+concat([]) -> <<>>;
+concat([E]) -> E;
+concat([A1, A2 | T]) -> concat([<<A1/binary, " ", A2/binary>> | T]).
+
+
+    
