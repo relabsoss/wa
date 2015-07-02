@@ -5,27 +5,25 @@
 -include("wa.hrl").
 -include_lib("deps/alog/include/alog.hrl").
 
--define(URL, "http://www.google.com/recaptcha/api/verify").
+-define(URL, "https://www.google.com/recaptcha/api/siteverify").
 
 
 check(IP, Values) ->
-    Challenge = proplists:get_value(<<"recaptcha_challenge_field">>, Values, <<"">>),
     Response = proplists:get_value(<<"recaptcha_response_field">>, Values, <<"">>),
-    case (byte_size(Challenge) =:= 0) or (byte_size(Response) =:= 0) of
+    case (byte_size(Response) =:= 0) of
         true ->
-            ?DEBUG("One or more params of Recaptcha are zero length (~p | ~p)", [Challenge, Response]),
+            ?DEBUG("One or more params of Recaptcha are zero length (~p)", [Response]),
             false;
         false ->
-            api_call(?RECAPTCHA_KEY, IP, Challenge, Response)
+            api_call(?RECAPTCHA_KEY, IP, Response)
     end.
 
 
-api_call(Key, IP, Challenge, Response) ->
+api_call(Key, IP, Response) ->
     case restc:request(post, percent, ?URL, [200], [],
             [
-                {<<"privatekey">>, Key},
+                {<<"secret">>, Key},
                 {<<"remoteip">>, IP}, 
-                {<<"challenge">>, Challenge}, 
                 {<<"response">>, Response}
             ]) of
         {ok, _Status, _Headers, Body} ->

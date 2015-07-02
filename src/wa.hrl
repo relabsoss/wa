@@ -54,7 +54,7 @@
 
 -define(S2MS(S), S * 1000).
 
--define(RECAPTCHA_KEY, <<"">>).
+-define(RECAPTCHA_KEY, ?CONFIG(recaptcha_key, <<"">>)).
 
 -define(TEMPLATES, [
         {"reg", template_reg, template_reg_subject},
