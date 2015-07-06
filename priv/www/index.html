@@ -2,8 +2,9 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8">
-    <title></title>
-    <link rel="stylesheet" href="/css/semantic.min.css" media="all">
+    <title>WebApplication</title>
+    <link rel="stylesheet" href="/css/semantic.min.css" media="all" />
+    <link href="https://dadata.ru/static/css/lib/suggestions-15.6.css" type="text/css" rel="stylesheet" />
     <style type="text/css">
       .r { text-align: right; }
       .vat { vertical-align: top; }
@@ -13,50 +14,77 @@
     </style> 
   </head>
   <body>
-    <div class="ui page two column centered grid">
-      <div class="column">
-        <h1>        
-          <div id="statusbox" class="ui label">...</div>
-          Application
-        </h1>
-      </div>
-      <div id="userp" class="column">
-        <div class="ui basic buttons userp profile">
-            <div class="ui button">Profile</div>
-            <div class="ui button">Logout</div>
-        </div>
-        <div class="ui basic buttons userp login">
-          <div class="ui button" onclick="$.app.user.modal('reg')">Register</div>
-          <div class="ui button" onclick="$.app.user.modal('log')">Login</div>          
-        </div>
+    <div id="menu" class="ui attached stackable menu">
+      <div class="ui container">
+        <a class="item user valid" onclick="$.app.user.modal('prof');">
+          <i class="user icon"></i> Profile
+        </a>
+        <a class="item user guest" onclick="$.app.user.modal('reg');">
+          <i class="add user icon"></i> Register
+        </a>
+        <a class="item user guest" onclick="$.app.user.modal('log');">
+          <i class="sign in icon"></i> Login
+        </a>
+        <a class="item user valid">
+          <i class="sign out icon" onclick="$.app.user.logout();"></i> Logout
+        </a>
+        <a class="item">
+          <i class="wifi icon"></i><div id="statusbox" class="ui mini label">...</div> 
+        </a>
       </div>
     </div>
-
+  
     <div id="user_modal" class="ui modal">
       <div class="content">
         <div class="ui two column middle aligned very relaxed stackable grid">
           <div class="column">
-            <div class="ui form">
-              <div class="field required">
+            <div id="user_message"></div>
+            <form class="ui form" id="user_form">
+              <input type="hidden" id="_update_token" name="token"/>
+              <div class="field required e log reg res">
                 <label>E-mail</label>
                 <div class="ui left icon input">
-                  <input type="text" placeholder="user@domain.dtl">
+                  <input class="mail" name="mail" type="text" placeholder="user@domain">
                   <i class="mail icon"></i>
                 </div>
               </div>
-              <div class="field required">
-                <label>Password</label>
-                <div class="ui left icon input">
-                  <input type="password">
-                  <i class="lock icon"></i>
+              <div class="two fields e reg">
+                <div class="field required">
+                  <label>First name</label>
+                  <input class="fname" name="fname" type="text" placeholder="...">
+                </div>
+                <div class="field required">
+                  <label>Last name</label>
+                  <input class="lname" name="lname" type="text" placeholder="...">
                 </div>
               </div>
-              <div class="field">
+              <div class="two fields">
+                <div class="field required e log upd prof">
+                  <label>Password</label>
+                  <div class="ui left icon input">
+                    <input name="pass" type="password">
+                    <i class="lock icon"></i>
+                  </div>
+                </div>
+                <div class="field required e upd prof">
+                  <label>Repeat password</label>
+                  <div class="ui left icon input">
+                    <input name="pass_dup" type="password">
+                    <i class="lock icon"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="field e reg res">
                 <div class="g-recaptcha" data-sitekey="6LdqKQkTAAAAAEsBXbaCyCH_k-SGkuFqSiRHssiq"></div>
               </div>
-              <div class="ui blue submit button">Login</div>
-              <div class="ui basic button">Reset password</div>
-            </div>
+              <div class="ui blue button e log b_login">Login</div>
+              <div class="ui blue button e reg b_register">Register</div>
+              <div class="ui blue button e upd prof b_update">Update password</div>
+              <div class="ui blue button e res b_reset">Reset password</div>
+              <div class="ui grey button e log" onclick="$.app.user.modal('res');">Reset password</div>
+              <div class="ui basic button e log reg upd prof" onclick="$.app.user.close();">Cancel</div>
+              <div class="ui basic button e res" onclick="$.app.user.modal('log');">Cancel</div>
+            </form>
           </div>
           <div class="ui vertical divider">Or</div>
           <div class="center aligned column">
@@ -75,11 +103,29 @@
     </div>    
 
     <div class="hide">
+      <div id="msg_reg_success">Registration successful, please, check your mailbox.</div>
+      <div id="msg_reset_success">We send mail with auth URL. Please, check our mailbox.</div>
+      <div id="msg_update_success">The password was updated. You are logged in.</div>
+      <div id="msg_no_server">Can't get valid replay from server!</div>
+      <div id="msg_unknown_request">Your request is unknown. Please, reload this page.</div>
+      <div id="msg_unknown_user">User wasn't found on out server.</div>
+      <div id="msg_unknown_user_really">User wasn't found on out server. I check its twice!</div>
+      <div id="msg_invalid_token">Your operation token are invalid. Please, repeat last operation.</div>
+      <div id="msg_operation_failed">Operation failed. Please, repeat it from beginning.</div>
+      <div id="msg_bad_income">Invalid incoming data. Please, get URL from mail one more time.</div>
+      <div id="msg_captcha_fail">ReCAPTCHA replay was wrong. Please, try one more time.</div>
+      <div id="msg_already">User with this mail are already exists. Maybe you need repair your password?</div>
     </div>
 
     <script type="text/javascript" src="/js/jquery.min.js"></script>
     <script type="text/javascript" src="/js/semantic.min.js"></script>
+    <script type="text/javascript" src="/js/moment.min.js"></script>
     
+    <!--[if lt IE 10]>
+      <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery-ajaxtransport-xdomainrequest/1.0.1/jquery.xdomainrequest.min.js"></script>
+    <![endif]-->
+    <script type="text/javascript" src="https://dadata.ru/static/js/lib/jquery.suggestions-15.6.min.js"></script>
+    <script type="text/javascript">var DADATA_TOKEN = "ebe9372d199e2d78c15c18cb18a04e966a711665";</script>
     <script src='https://www.google.com/recaptcha/api.js'></script> 
 
     <script type="text/javascript" src="/js/app.js"></script>

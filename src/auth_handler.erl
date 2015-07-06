@@ -13,8 +13,8 @@ init({tcp, http}, Req, _Opts) ->
 handle(Req, Pid) ->
     {PathInfo, Req2} = cowboy_req:path_info(Req),
     {Reply, Req3} = session:process(Pid, PathInfo, Req2),
-    {Type, Reply} = iomod:out(Reply),
-    {ok, Req4} = cowboy_req:reply(200, [{<<"content-type">>, Type}], Reply, Req3),
+    {Type, SReply} = iomod:out(Reply),
+    {ok, Req4} = cowboy_req:reply(200, [{<<"content-type">>, Type}], SReply, Req3),
     {ok, Req4, Pid}.
 
 terminate(_Reason, _Req, _State) ->

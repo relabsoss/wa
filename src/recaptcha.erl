@@ -9,7 +9,7 @@
 
 
 check(IP, Values) ->
-    Response = proplists:get_value(<<"recaptcha_response_field">>, Values, <<"">>),
+    Response = proplists:get_value(<<"g-recaptcha-response">>, Values, <<"">>),
     case (byte_size(Response) =:= 0) of
         true ->
             ?DEBUG("One or more params of Recaptcha are zero length (~p)", [Response]),

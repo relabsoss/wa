@@ -41,7 +41,7 @@ init_db(2, Pool) ->
                     id varchar(256) PRIMARY KEY,
                     mail varchar(128),
                     title varchar(256),
-                    token varchar(256),
+                    token varchar(512),
                     en boolean NOT NULL DEFAULT TRUE,
                     atime timestamp DEFAULT current_timestamp
                 );",
