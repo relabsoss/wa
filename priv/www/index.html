@@ -9,8 +9,6 @@
       .r { text-align: right; }
       .vat { vertical-align: top; }
       .hide { display: none !important; }
-      .brick { margin-bottom: 5pt; }
-      .hat { margin-top: 25pt; }
     </style> 
   </head>
   <body>
@@ -44,38 +42,38 @@
               <div class="field required e log reg res">
                 <label>E-mail</label>
                 <div class="ui left icon input">
-                  <input class="mail" name="mail" type="text" placeholder="user@domain">
+                  <input class="mail" name="mail" type="text" placeholder="user@domain" valid="type: 're', re: RE_MAIL, message: 'Mail must be valid'">
                   <i class="mail icon"></i>
                 </div>
               </div>
               <div class="two fields e reg">
                 <div class="field required">
                   <label>First name</label>
-                  <input class="fname" name="fname" type="text" placeholder="...">
+                  <input class="fname" name="fname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your first name'">
                 </div>
                 <div class="field required">
                   <label>Last name</label>
-                  <input class="lname" name="lname" type="text" placeholder="...">
+                  <input class="lname" name="lname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your last name'">
                 </div>
               </div>
               <div class="two fields">
                 <div class="field required e log upd prof">
                   <label>Password</label>
                   <div class="ui left icon input">
-                    <input name="pass" type="password">
+                    <input name="pass" type="password" valid="type: 're', re: RE_ANY, message: 'Please, enter your password'">
                     <i class="lock icon"></i>
                   </div>
                 </div>
                 <div class="field required e upd prof">
                   <label>Repeat password</label>
                   <div class="ui left icon input">
-                    <input name="pass_dup" type="password">
+                    <input name="pass_dup" type="password" valid="type: 'equal', with: 'pass', message: 'Passwords must be equal'">
                     <i class="lock icon"></i>
                   </div>
                 </div>
               </div>
               <div class="field e reg res">
-                <div class="g-recaptcha" data-sitekey="6LdqKQkTAAAAAEsBXbaCyCH_k-SGkuFqSiRHssiq"></div>
+                <div class="g-recaptcha" id="user_captcha" data-sitekey="6LdqKQkTAAAAAEsBXbaCyCH_k-SGkuFqSiRHssiq"></div>
               </div>
               <div class="ui blue button e log b_login">Login</div>
               <div class="ui blue button e reg b_register">Register</div>

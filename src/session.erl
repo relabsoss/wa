@@ -150,7 +150,7 @@ pass(false, [<<"reg">>], Req, State) ->
                     {?ER(bad_income), Req1, State};
                 false ->
                     {IP, Req2} = ?REAL_IP(Req),
-                    case recaptcha:check(IP, Values) of
+                    case recaptcha:check(IP, Values, ?CONFIG(recaptcha_key, <<"">>)) of
                         false ->
                             {?ER(captcha_fail), Req2, State};
                         true ->
@@ -188,7 +188,7 @@ pass(false, [<<"reset">>], Req, State) ->
                     {?ER(bad_income), Req1, State};
                 false ->
                     {IP, Req2} = ?REAL_IP(Req),
-                    case recaptcha:check(IP, Values) of
+                    case recaptcha:check(IP, Values, ?CONFIG(recaptcha_key, <<"">>)) of
                         false ->
                             {?ER(captcha_fail), Req2, State};
                         true ->

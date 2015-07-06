@@ -42,7 +42,9 @@
 
         // API
         var error = function(m) { $.app.ui.message("#user_message", "negative", "Error", m); };
+        var error_m = function(m) { error($("#msg_" + m).text()); };
         var done = function(m) { $.app.ui.message("#user_message", "positive", "Done", m); };
+        var done_m = function(m) { done($("#msg_" + m).text()); };
         var fail = function(r, e) { error(r ? r.error : "" || false); };
 
         $("#menu").api({
@@ -60,7 +62,14 @@
                 }  
             });
         $([
-            {btn: '.b_login', url: '/auth/login', fields: [], success: function(r) { reload(); } }
+            { btn: '.b_login', 
+              url: '/auth/login', 
+              fields: ['mail', 'pass'], 
+              success: function(r) { reload(); }},
+            { btn: '.b_reset', 
+              url: '/auth/reset', 
+              fields: ['mail'], 
+              success: function(r) { done_m('reset_success'); }},
             
             ]).map(function(_k, v) {
                 $(v.btn).api({
@@ -72,7 +81,8 @@
                         return $.app.ui.validate($("#user_form"), v.fields) ? settings : false; 
                     },
                     successTest: function(r) {
-                        return (r.result == 'error') ? error($("#msg_" + r.error).text()) : v.success(r);
+                        grecaptcha.reset();
+                        return (r.result == 'error') ? error_m(r.error) : v.success(r);
                     }  
                 });
             });
@@ -115,11 +125,44 @@
     $.app.ui.message = function(d, cl, head, info) 
     {
         $(d).attr('class', "ui " + cl + " message")
-         .html("<div class='header'>" + strip_html(head) + "</div><p>" + strip_html(info) + "</p>");
+            .html("<div class='header'>" + strip_html(head) + "</div><p>" + strip_html(info) + "</p>");
     }  
 
     $.app.ui.validate = function(f, list) {
-        return true;
+        var r = true;
+
+        $(".notificator", f).detach();
+        $("input, select", f).map(function(_k, v) {
+            if(list.indexOf($(v).attr("name")) != -1) {
+                var obj = $(v).attr("valid") ? eval("new Object({" + $(v).attr("valid") + "})") : {};
+                var type = obj.type || 'undefined';
+                var val = $(v).val();
+                switch(type) {
+                    case('re'): 
+                        if(!val.match(obj.re || RE_ANY)) { 
+                            $.app.ui.error_field($(v), obj.message); 
+                            r = r && false; 
+                        }  
+                        break;
+                    case('equal'):  
+                        if(val != $("#" + obj.with).val()) { 
+                            $.app.ui.error_field($(v), obj.message); 
+                            r = r && false; 
+                        } 
+                        break;
+                } 
+            }
+        });
+        return r;
+    }
+    $.app.ui.error_field = function(el, msg) {
+        var p = $("<div class='ui pointing label notificator'>" + strip_html(msg) + "</div>");
+        el.parent().after(p);
+        el.parent().parent().addClass("error");
+        (function(elm, pop) { elm.focus(function() { 
+                el.parent().parent().removeClass("error");
+                pop.detach();
+             }); })(el, p);
     }
 
     /*
@@ -167,8 +210,8 @@
                 repeat(function() { $.app.ws.init(); }); 
             };
         this.WS.onerror = function() { 
-                $.app.ui.status("red", "Error"); r
-                epeat(function() { $.app.ws.init(); }); 
+                $.app.ui.status("red", "Error"); 
+                repeat(function() { $.app.ws.init(); }); 
             };
     }
 

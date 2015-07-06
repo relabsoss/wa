@@ -15,7 +15,7 @@
 % Configuration
 %
 
--define(CONFIG(Key, Default), wa_app:config(Key, Default)).
+-define(CONFIG(Key, Default), application:get_env(wa, Key, Default)).
 -define(PV(Key, Set), proplists:get_value(Key, Set)).
 -define(PV(Key, Set, Default), proplists:get_value(Key, Set, Default)).
 
@@ -53,8 +53,6 @@
 -define(LONG_SESSION, 30 * 24 * 3600).
 
 -define(S2MS(S), S * 1000).
-
--define(RECAPTCHA_KEY, ?CONFIG(recaptcha_key, <<"">>)).
 
 -define(TEMPLATES, [
         {"reg", template_reg, template_reg_subject},

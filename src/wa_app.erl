@@ -2,13 +2,15 @@
 -behaviour(application).
 
 -export([start/2, stop/1]).
--export([config/2, priv_dir/0]).
+-export([priv_dir/0]).
+
+-include("wa.hrl").
 
 start(_StartType, _StartArgs) ->
     Priv = priv_dir(),
     VRoutes = [
             {"/", cowboy_static, {file, filename:join([Priv, "www", "index.html"])}},
-            {"/oauth/:provider/:action", social_handler, config(social, [])},    
+            {"/oauth/:provider/:action", social_handler, ?CONFIG(social, [])},    
             {"/auth/[...]", auth_handler, []},
             {"/events", events_handler, []},
             {"/[...]", cowboy_static, {dir,  filename:join(Priv, "www")}}
@@ -22,11 +24,6 @@ start(_StartType, _StartArgs) ->
 stop(_State) ->
     ok.
 
-config(Key, Default) ->
-    case application:get_env(Key) of
-        {ok, Value} -> Value;
-        _ -> Default
-    end.
 
 priv_dir() ->
     Ebin = filename:dirname(code:which(?MODULE)),
