@@ -244,35 +244,30 @@ pass(false, [<<"update">>], Req, State) ->
             {?ER(operation_failed), Req, State}
     end;
 
-pass(true, [<<"user">>, <<"info">>], Req, State) ->
+pass(true, [<<"user">>, <<"info">>], Req, #{ mail := Mail, info := Info } = State) ->
     Token = random(),
-    {[ 
-            {result, ok},
-            {mail, maps:get(mail, State)},
-            {token, Token}
-        ] ++ maps:get(info, State), Req, State#{ token := Token }};
+    Socials = socials_out(persist:list_social_link(pgdb, Mail)), 
+    R = lists:flatten([{result, ok}, {mail, Mail}, {token, Token}, Info, Socials]),
+    {R, Req, State#{ token := Token }};
 
 pass(true, [<<"update">>], Req, State) ->
-    case cowboy_req:body_qs(Req) of 
-        {ok, Values, Req1} ->
+    check_token(Req, State, fun(Req1, Values) ->
             Pwd = proplists:get_value(<<"pass">>, Values, <<"123">>),
-            Token = proplists:get_value(<<"token">>, Values, <<"">>),    
-            case (byte_size(Token) =/= 0) and (Token =:= maps:get(token, State))  of
-                true ->
-                    DBPwd = plain_pwd_to_db_pwd(Pwd),
-                    case persist:update_user(pgdb, maps:get(mail, State), DBPwd) of
-                        {ok, 1} ->
-                            {[{result, ok}], Req1, State#{ token := <<"">> }};
-                        _ ->
-                            {?ER(operation_failed), Req1, State#{ token := <<"">> }}
-                    end;        
-                false ->
-                    {?ER(invalid_token), Req1, State#{ token := <<"">> }}
-            end;
-                Any ->
-            ?ERROR("Passing params reply ~p", [Any]),
-            {?ER(operation_failed), Req, State}
-    end;
+            DBPwd = plain_pwd_to_db_pwd(Pwd),
+            case persist:update_user(pgdb, maps:get(mail, State), DBPwd) of
+                {ok, 1} ->
+                    {[{result, ok}], Req1, State#{ token := <<"">> }};
+                _ ->
+                    {?ER(operation_failed), Req1, State#{ token := <<"">> }}
+            end        
+        end);
+
+pass(true, [<<"unbind">>], Req, State) ->
+    check_token(Req, State, fun(Req1, Values) ->
+            SocId = proplists:get_value(<<"socid">>, Values, <<"">>),
+            persist:del_social_link(pgdb, SocId),
+            {[{result, ok}], Req1, State#{ token := <<"">> }}
+        end);
 
 pass(true, [<<"logout">>], Req, State) ->
     {[{result, ok}], Req, State#{ 
@@ -330,6 +325,19 @@ update_password(Mail, Info, Pwd, Req, State) ->
                             {?ER(operation_failed), Req, State#{ token := <<"">> }}
                     end
             end
+    end.
+
+check_token(Req, State, Fun) ->
+    case cowboy_req:body_qs(Req) of 
+        {ok, Values, Req1} ->
+            Token = proplists:get_value(<<"token">>, Values, <<"">>),    
+            case (byte_size(Token) =/= 0) and (Token =:= maps:get(token, State))  of
+                true -> Fun(Req1, Values);        
+                false -> {?ER(invalid_token), Req1, State#{ token := <<"">> }}
+            end;
+        Any ->
+            ?ERROR("Passing params reply ~p", [Any]),
+            {?ER(operation_failed), Req, State}
     end.
 
 %
@@ -400,6 +408,8 @@ pass_social(Provider, Props, Req, State) ->
     {ok, Req1} = cowboy_req:reply(302, [{<<"location">>, URL}], <<>>, Req),
     {Req1, NewState}.
 
+socials_out(List) ->
+    {social, [[{id, Id}, {title, Title}]|| {Id, Title, _} <- List]}.
 
 %
 % local

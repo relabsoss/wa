@@ -37,16 +37,18 @@ init_db(2, Pool) ->
             %
             % Social
             %
+            "DROP TABLE users_social;",
             "CREATE TABLE users_social (
-                    id varchar(256) PRIMARY KEY,
+                    id varchar(256),
                     mail varchar(128),
                     title varchar(256),
                     token varchar(512),
                     en boolean NOT NULL DEFAULT TRUE,
                     atime timestamp DEFAULT current_timestamp
                 );",
+            "CREATE INDEX users_social_id_idx ON users_social(id);",
             "CREATE INDEX users_social_mail_idx ON users_social(mail, en);",
-            "CREATE INDEX users_social_id_idx ON users_social(id, en);",
+            "CREATE INDEX users_social_id_en_idx ON users_social(id, en);",
             "CREATE INDEX users_social_id_mail_en_idx ON users_social(id, mail, en);"
          ]).
 

@@ -104,6 +104,7 @@
                                 $(".u_" + v, $.app.user.ui).text(r[v]);
                             });
                         $("#_update_token").val(r.token);
+                        $.app.user.socials(r);
                     } else { 
                         $(".item.user.guest").show(); 
                         $.app.ui.nav();
@@ -112,6 +113,40 @@
             });
     }
     
+    $.app.user.socials = function(r) {
+        $("#user_socials *").detach();
+        $(r.social).map(function(_k, v) {
+                var a = v.id.split('@', 2);
+                var net = { 'facebook.com': 'facebook', 
+                            'google.com': 'google', 
+                            'vk.com': 'vk' };
+
+                var i = $("<div class='item'> \
+                        <div class='middle aligned content'> \
+                            <i class='" + net[(a[1])] + " icon'></i> \
+                             " + strip_html(v.title)  + " \
+                        </div> \
+                        <div class='middle right aligned content'> \
+                            <button class='circular ui icon button'><i class='trash icon'></i></button> \
+                        </div> \
+                    </div>");
+                $("button", i).api({
+                        url: '/auth/unbind',
+                        method: 'post',
+                        cache: false,
+                        beforeSend: function(s) {
+                                s.data = {
+                                    socid: v.id,
+                                    token: r.token
+                                };
+                                return s;
+                            },
+                        successTest: function(r) { $.app.user.check(); } 
+                    });
+                $("#user_socials").append(i);
+            });
+    }
+
     $.app.user.modal = function(type) {
         $('.e', this.ui).hide();
         $('.' + type, this.ui).show();
