@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -behaviour(poolboy_worker).
 
--export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, field/3, field/4]).
+-export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, prepare/2, field/3, field/4]).
 -export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
@@ -49,6 +49,13 @@ qe(Pool, Query, Params) ->
             gen_server:call(Worker, {qe, Query, Params})
         end).   
 
+
+prepare(Pool, Query) -> 
+    poolboy:transaction(Pool, fun(Worker) ->
+            gen_server:call(Worker, {prepare, Query}, infinity)
+        end).
+
+
 field(Row, Column, Columns) ->
     ColumnB = list_to_binary(Column),
     lists:filter(fun({C, _}) -> C#column.name == ColumnB end, 
@@ -85,6 +92,17 @@ handle_call({qe, Query, Params}, _From, {C, _} = State) ->
         {ok, Columns, Rows} -> {reply, {ok, {Columns, Rows}}, State};
         {ok, _Count, Columns, Rows} -> {reply, {ok, {Columns, Rows}}, State};
         Err -> ?ERROR("PostgreSQL error ~p - ~p", [Query, Err]), {reply, {error, Err}, State}
+    end;
+
+handle_call({pasre, _Query}, _From, {undefine, _} = State) -> 
+    {reply, {error, noconnection}, State};
+
+handle_call({prepare, Query}, _From, {C, _} = State) -> 
+    case epgsql:parse(C, Query) of
+        {error, Reason} -> 
+            ?ERROR("PgSQL parse fail ~p ~p", [Query, Reason]),
+            {reply, {error, Reason}, State};
+        Result -> {reply, Result, State}
     end;
 
 handle_call(_Msg, _From, State) -> 
