@@ -12,22 +12,24 @@
     </style> 
   </head>
   <body>
-    <div id="menu" class="ui attached stackable menu">
+    <div id="menu" class="ui secondary pointing menu">
       <div class="ui container">
+        <a class="item user guest" onclick="$.app.user.modal('log');">
+          <i class="sign in icon"></i> Login
+        </a>
         <a class="item user valid" onclick="$.app.user.modal('prof');">
           <i class="user icon"></i> Profile
         </a>
         <a class="item user guest" onclick="$.app.user.modal('reg');">
           <i class="add user icon"></i> Register
         </a>
-        <a class="item user guest" onclick="$.app.user.modal('log');">
-          <i class="sign in icon"></i> Login
-        </a>
         <a class="item user valid" onclick="$.app.user.logout();">
           <i class="sign out icon"></i> Logout
         </a>
-        <div class="item">
-          <i class="wifi icon"></i><div id="statusbox" class="ui mini label">...</div> 
+        <div class="right menu">
+          <div class="item">
+            <i class="wifi icon"></i><div id="statusbox" class="ui mini label">...</div> 
+          </div>
         </div>
       </div>
     </div>

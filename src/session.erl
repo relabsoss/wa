@@ -112,7 +112,7 @@ pass(false, [<<"login">>], Req, State) ->
     case cowboy_req:body_qs(Req) of 
         {ok, Values, Req1} ->
             Mail = proplists:get_value(<<"mail">>, Values, <<"">>),
-            Pwd = proplists:get_value(<<"password">>, Values, <<"">>),
+            Pwd = proplists:get_value(<<"pass">>, Values, <<"">>),
             DBPwd = plain_pwd_to_db_pwd(Pwd),
             case persist:get_user(pgdb, Mail, DBPwd) of
                 {M, FN, LN} ->
@@ -246,7 +246,6 @@ pass(false, [<<"update">>], Req, State) ->
 
 pass(true, [<<"user">>, <<"info">>], Req, State) ->
     Token = random(),
-    ?INFO("~p", [Token]),
     {[ 
             {result, ok},
             {mail, maps:get(mail, State)},
@@ -256,10 +255,9 @@ pass(true, [<<"user">>, <<"info">>], Req, State) ->
 pass(true, [<<"update">>], Req, State) ->
     case cowboy_req:body_qs(Req) of 
         {ok, Values, Req1} ->
-            Pwd = proplists:get_value(<<"password">>, Values, <<"123">>),
+            Pwd = proplists:get_value(<<"pass">>, Values, <<"123">>),
             Token = proplists:get_value(<<"token">>, Values, <<"">>),    
-            ?INFO("~p ~p", [Token, maps:get(token, State)]),
-            case Token =:= maps:get(token, State) of
+            case (byte_size(Token) =/= 0) and (Token =:= maps:get(token, State))  of
                 true ->
                     DBPwd = plain_pwd_to_db_pwd(Pwd),
                     case persist:update_user(pgdb, maps:get(mail, State), DBPwd) of

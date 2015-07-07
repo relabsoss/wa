@@ -6,8 +6,9 @@
     
     function repeat(cb) { setTimeout(cb, 1000); }  
     function after(t, cb) { setTimeout(cb, t * 1000); }  
+
     function go(l) { window.location.href = l; }
-    function reload() { location.reload(); }
+
     function hash_clear() { window.location.hash = ''; }
     function hash_params() {
         var h = window.location.hash.substring(1);                    
@@ -39,8 +40,7 @@
             });
         
         // Menu
-        $(".item.user.valid").hide();
-        $(".item.user.guest").hide();
+        $.app.user.check();
 
         // API
         var error = function(m) { $.app.ui.message("#user_message", "negative", "Error", m); };
@@ -49,30 +49,11 @@
         var done_m = function(m) { done($("#msg_" + m).text()); };
         var fail = function(r, e) { error(r ? r.error : "" || false); };
 
-        $("#menu").api({
-                url: '/auth/user/info',
-                on: 'now',
-                cache: false,
-                successTest: function(r) {
-                    if(r.result == 'ok') { 
-                        $(".item.user.valid").show(); 
-                        this.mail = r.mail;                                            
-                        $(['mail', 'fname', 'lname']).map(function(_k, v) {
-                                $(".u_" + v, $.app.user.ui).text(r[v]);
-                            });
-                        $("#_update_token").val(this.token);
-                    } else { 
-                        $(".item.user.guest").show(); 
-                        $.app.ui.nav();
-                        $.app.user.ui.modal({ onHidden: function() { reload(); } }); 
-                    }
-                }  
-            });
         $([
             { btn: '.b_login', 
               url: '/auth/login', 
               fields: ['mail', 'pass'], 
-              success: function(r) { reload(); }},
+              success: function(r) { $.app.user.check(); $.app.user.close(); }},
             { btn: '.b_reset', 
               url: '/auth/reset', 
               fields: ['mail'], 
@@ -84,7 +65,7 @@
             { btn: '.b_update', 
               url: '/auth/update', 
               fields: ['pass', 'pass_dup'], 
-              success: 'update_success' }            
+              success: function(r) { done_m('update_success'); $.app.user.check(); }}            
             ]).map(function(_k, v) {
                 $(v.btn).api({
                     url: v.url,
@@ -107,6 +88,30 @@
             });
     }
 
+    $.app.user.check = function() {
+        $(".item.user.valid").hide();
+        $(".item.user.guest").hide();
+
+        $("#menu").api({
+                url: '/auth/user/info',
+                on: 'now',
+                cache: false,
+                successTest: function(r) {
+                    if(r.result == 'ok') { 
+                        $(".item.user.valid").show(); 
+                        this.mail = r.mail;                                            
+                        $(['mail', 'fname', 'lname']).map(function(_k, v) {
+                                $(".u_" + v, $.app.user.ui).text(r[v]);
+                            });
+                        $("#_update_token").val(r.token);
+                    } else { 
+                        $(".item.user.guest").show(); 
+                        $.app.ui.nav();
+                    }
+                }  
+            });
+    }
+    
     $.app.user.modal = function(type) {
         $('.e', this.ui).hide();
         $('.' + type, this.ui).show();
@@ -120,11 +125,11 @@
 
     $.app.user.logout = function() {
         $("#menu").api({
-            url: '/auth/logout',
-            on: 'now',
-            cache: false,
-            successTest: function(r) { reload(); }  
-        }); 
+                url: '/auth/logout',
+                on: 'now',
+                cache: false,
+                successTest: function(r) { $.app.user.check(); }  
+            }); 
     }
 
     /*
