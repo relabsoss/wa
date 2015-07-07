@@ -1,0 +1,9 @@
+Hi!
+
+You just want to register {{ domain }}? Come on, one more step to complete -
+add some passwords here:
+
+https://{{ domain }}/#user.update:{{ token }}
+
+WBR,
+{{ domain }} team

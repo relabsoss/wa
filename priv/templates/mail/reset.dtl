@@ -1,0 +1,8 @@
+Hi!
+
+Lost your password? Not a problem, follow:
+
+https://{{ domain }}/#user.update:{{ token }}
+
+WBR,
+{{ domain }} team
