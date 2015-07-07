@@ -94,7 +94,7 @@ handle_call({qe, Query, Params}, _From, {C, _} = State) ->
         Err -> ?ERROR("PostgreSQL error ~p - ~p", [Query, Err]), {reply, {error, Err}, State}
     end;
 
-handle_call({pasre, _Query}, _From, {undefine, _} = State) -> 
+handle_call({prepare, _Query}, _From, {undefine, _} = State) -> 
     {reply, {error, noconnection}, State};
 
 handle_call({prepare, Query}, _From, {C, _} = State) -> 
