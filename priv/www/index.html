@@ -23,12 +23,12 @@
         <a class="item user guest" onclick="$.app.user.modal('log');">
           <i class="sign in icon"></i> Login
         </a>
-        <a class="item user valid">
-          <i class="sign out icon" onclick="$.app.user.logout();"></i> Logout
+        <a class="item user valid" onclick="$.app.user.logout();">
+          <i class="sign out icon"></i> Logout
         </a>
-        <a class="item">
+        <div class="item">
           <i class="wifi icon"></i><div id="statusbox" class="ui mini label">...</div> 
-        </a>
+        </div>
       </div>
     </div>
   
@@ -42,32 +42,46 @@
               <div class="field required e log reg res">
                 <label>E-mail</label>
                 <div class="ui left icon input">
-                  <input class="mail" name="mail" type="text" placeholder="user@domain" valid="type: 're', re: RE_MAIL, message: 'Mail must be valid'">
+                  <input class="mail" name="mail" type="text" placeholder="user@domain" valid="type: 're', re: RE_MAIL, message: 'Mail must be valid', up: 1">
                   <i class="mail icon"></i>
                 </div>
+              </div>
+              <div class="field e prof">
+                <label>E-mail</label>
+                <div class="u_mail"></div>
               </div>
               <div class="two fields e reg">
                 <div class="field required">
                   <label>First name</label>
-                  <input class="fname" name="fname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your first name'">
+                  <input class="fname" name="fname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your first name', up: 0">
                 </div>
                 <div class="field required">
                   <label>Last name</label>
-                  <input class="lname" name="lname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your last name'">
+                  <input class="lname" name="lname" type="text" placeholder="..." valid="type: 're', re: RE_ANY, message: 'Please, enter your last name', up: 0">
+                </div>
+              </div>
+              <div class="two fields e prof">
+                <div class="field">
+                  <label>First name</label>
+                  <div class="u_fname"></div>
+                </div>
+                <div class="field">
+                  <label>Last name</label>
+                  <div class="u_lname"></div>
                 </div>
               </div>
               <div class="two fields">
                 <div class="field required e log upd prof">
                   <label>Password</label>
                   <div class="ui left icon input">
-                    <input name="pass" type="password" valid="type: 're', re: RE_ANY, message: 'Please, enter your password'">
+                    <input name="pass" type="password" valid="type: 'len', min: 6, message: 'Please, enter your password at least 6 symbols', up: 1">
                     <i class="lock icon"></i>
                   </div>
                 </div>
                 <div class="field required e upd prof">
                   <label>Repeat password</label>
                   <div class="ui left icon input">
-                    <input name="pass_dup" type="password" valid="type: 'equal', with: 'pass', message: 'Passwords must be equal'">
+                    <input name="pass_dup" type="password" valid="type: 'equal', with: 'pass', message: 'Passwords must be equal', up: 1">
                     <i class="lock icon"></i>
                   </div>
                 </div>
@@ -84,8 +98,8 @@
               <div class="ui basic button e res" onclick="$.app.user.modal('log');">Cancel</div>
             </form>
           </div>
-          <div class="ui vertical divider">Or</div>
-          <div class="center aligned column">
+          <div class="ui vertical divider e reg log">Or</div>
+          <div class="center aligned column e reg log">
             <a href="/oauth/facebook/login" class="ui facebook button">
               <i class="facebook icon"></i> Facebook
             </a>
@@ -103,10 +117,10 @@
     <div class="hide">
       <div id="msg_reg_success">Registration successful, please, check your mailbox.</div>
       <div id="msg_reset_success">We send mail with auth URL. Please, check our mailbox.</div>
-      <div id="msg_update_success">The password was updated. You are logged in.</div>
+      <div id="msg_update_success">The password was updated.</div>
       <div id="msg_no_server">Can't get valid replay from server!</div>
       <div id="msg_unknown_request">Your request is unknown. Please, reload this page.</div>
-      <div id="msg_unknown_user">User wasn't found on out server.</div>
+      <div id="msg_unknown_user">User wasn't found.</div>
       <div id="msg_unknown_user_really">User wasn't found on out server. I check its twice!</div>
       <div id="msg_invalid_token">Your operation token are invalid. Please, repeat last operation.</div>
       <div id="msg_operation_failed">Operation failed. Please, repeat it from beginning.</div>

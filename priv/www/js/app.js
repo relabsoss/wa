@@ -5,8 +5,10 @@
     var RE_ANY = /^.+$/; 
     
     function repeat(cb) { setTimeout(cb, 1000); }  
+    function after(t, cb) { setTimeout(cb, t * 1000); }  
     function go(l) { window.location.href = l; }
-    function reload() { window.location.reload(); }
+    function reload() { location.reload(); }
+    function hash_clear() { window.location.hash = ''; }
     function hash_params() {
         var h = window.location.hash.substring(1);                    
         return (h && h.length > 1) ? h.split(':', 2) : ['nope','']; 
@@ -54,10 +56,15 @@
                 successTest: function(r) {
                     if(r.result == 'ok') { 
                         $(".item.user.valid").show(); 
-                        this.user = r; 
+                        this.mail = r.mail;                                            
+                        $(['mail', 'fname', 'lname']).map(function(_k, v) {
+                                $(".u_" + v, $.app.user.ui).text(r[v]);
+                            });
+                        $("#_update_token").val(this.token);
                     } else { 
                         $(".item.user.guest").show(); 
-                        $.app.ui.nav(); 
+                        $.app.ui.nav();
+                        $.app.user.ui.modal({ onHidden: function() { reload(); } }); 
                     }
                 }  
             });
@@ -69,8 +76,15 @@
             { btn: '.b_reset', 
               url: '/auth/reset', 
               fields: ['mail'], 
-              success: function(r) { done_m('reset_success'); }},
-            
+              success: 'reset_success' },
+            { btn: '.b_register', 
+              url: '/auth/reg', 
+              fields: ['mail', 'fname', 'lname'], 
+              success: 'reg_success' },
+            { btn: '.b_update', 
+              url: '/auth/update', 
+              fields: ['pass', 'pass_dup'], 
+              success: 'update_success' }            
             ]).map(function(_k, v) {
                 $(v.btn).api({
                     url: v.url,
@@ -78,11 +92,16 @@
                     serializeForm: true,
                     method: 'post',
                     beforeSend: function(settings) { 
+                        $.app.ui.message_clean("#user_message");
                         return $.app.ui.validate($("#user_form"), v.fields) ? settings : false; 
                     },
                     successTest: function(r) {
                         grecaptcha.reset();
-                        return (r.result == 'error') ? error_m(r.error) : v.success(r);
+                        if(r.result == 'error') error_m(r.error);
+                        else {
+                            $("#user_form")[0].reset();
+                            $.isFunction(v.success) ? v.success() : done_m(v.success);
+                        }
                     }  
                 });
             });
@@ -91,15 +110,21 @@
     $.app.user.modal = function(type) {
         $('.e', this.ui).hide();
         $('.' + type, this.ui).show();
-        this.ui.modal('show');
+        $.app.ui.message_clean("#user_message");
+        this.ui.modal({ closable: false }).modal('show');
     }
 
     $.app.user.close = function() {
-        this.ui.modal('hide');        
+        this.ui.modal('hide');  
     }
 
     $.app.user.logout = function() {
-        
+        $("#menu").api({
+            url: '/auth/logout',
+            on: 'now',
+            cache: false,
+            successTest: function(r) { reload(); }  
+        }); 
     }
 
     /*
@@ -108,6 +133,7 @@
 
     $.app.ui.init = function() {};
     $.app.ui.status = function(t, s) { $("#statusbox").attr("class", "ui " + t + " mini label").text(s).show(); }
+    $.app.ui.up = function(p, n) { return n == 0 ? p : $.app.ui.up(p.parent(), n - 1); }
 
     $.app.ui.nav = function() {
         var a = hash_params(); 
@@ -115,6 +141,7 @@
             case 'user.update': {
                 if(a[1] && a[1].match(RE_TOKEN)) {
                     $("#_update_token").val(a[1]);
+                    hash_clear();
                     $.app.user.modal('upd');
                 } else go('/');                   
                 break;
@@ -127,6 +154,10 @@
         $(d).attr('class', "ui " + cl + " message")
             .html("<div class='header'>" + strip_html(head) + "</div><p>" + strip_html(info) + "</p>");
     }  
+    $.app.ui.message_clean = function(d) 
+    {
+        $(d).attr('class', "").html("");
+    }   
 
     $.app.ui.validate = function(f, list) {
         var r = true;
@@ -137,32 +168,29 @@
                 var obj = $(v).attr("valid") ? eval("new Object({" + $(v).attr("valid") + "})") : {};
                 var type = obj.type || 'undefined';
                 var val = $(v).val();
+                var bad = function() {
+                    $.app.ui.error_field($(v), obj.message, obj.up); 
+                    r = r && false; 
+                };
+
                 switch(type) {
-                    case('re'): 
-                        if(!val.match(obj.re || RE_ANY)) { 
-                            $.app.ui.error_field($(v), obj.message); 
-                            r = r && false; 
-                        }  
-                        break;
-                    case('equal'):  
-                        if(val != $("#" + obj.with).val()) { 
-                            $.app.ui.error_field($(v), obj.message); 
-                            r = r && false; 
-                        } 
-                        break;
+                    case('re'): if(!val.match(obj.re || RE_ANY)) bad(); break;
+                    case('len'): if(val.length < obj.min) bad(); break;
+                    case('equal'): if(val != $("input[name='" + obj.with + "']", f).val()) bad(); break;
                 } 
             }
         });
         return r;
     }
-    $.app.ui.error_field = function(el, msg) {
+
+    $.app.ui.error_field = function(el, msg, level) {
         var p = $("<div class='ui pointing label notificator'>" + strip_html(msg) + "</div>");
-        el.parent().after(p);
-        el.parent().parent().addClass("error");
-        (function(elm, pop) { elm.focus(function() { 
-                el.parent().parent().removeClass("error");
+        $.app.ui.up(el, level).after(p);
+        $.app.ui.up(el, level + 1).addClass("error");
+        (function(elm, pop, l) { elm.focus(function() { 
+                $.app.ui.up(el, l + 1).removeClass("error");
                 pop.detach();
-             }); })(el, p);
+             }); })(el, p, level);
     }
 
     /*

@@ -216,7 +216,7 @@ pass(false, [<<"reset">>], Req, State) ->
 pass(false, [<<"update">>], Req, State) ->
     case cowboy_req:body_qs(Req) of 
         {ok, Values, Req1} ->
-            Pwd = proplists:get_value(<<"password">>, Values, <<"">>),
+            Pwd = proplists:get_value(<<"pass">>, Values, <<"">>),
             Token = proplists:get_value(<<"token">>, Values, <<"">>),    
             case (byte_size(Pwd) =:= 0) or (re:run(Token, ?RE_TOKEN) =:= nomatch) of
                 true ->
@@ -246,6 +246,7 @@ pass(false, [<<"update">>], Req, State) ->
 
 pass(true, [<<"user">>, <<"info">>], Req, State) ->
     Token = random(),
+    ?INFO("~p", [Token]),
     {[ 
             {result, ok},
             {mail, maps:get(mail, State)},
@@ -257,6 +258,7 @@ pass(true, [<<"update">>], Req, State) ->
         {ok, Values, Req1} ->
             Pwd = proplists:get_value(<<"password">>, Values, <<"123">>),
             Token = proplists:get_value(<<"token">>, Values, <<"">>),    
+            ?INFO("~p ~p", [Token, maps:get(token, State)]),
             case Token =:= maps:get(token, State) of
                 true ->
                     DBPwd = plain_pwd_to_db_pwd(Pwd),
