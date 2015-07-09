@@ -34,6 +34,10 @@ Next, Mailgun. Go to https://mailgun.com/, register, add some domain, confirm it
 URL, public and private keys. Write it to local.sys.config at mail_sender section. (Some lyrics: most of public services 
 are block templated messages as a spam. If you need SMTP sender, you can take this one - https://github.com/mkrentovskiy/onelogin/blob/master/src/mail_sender.erl)
 
+ReCAPTCHA 2 is using for auto-registration block. You need open and secret key for it. Go to https://www.google.com/recaptcha/admin#list, add your 
+application, put localhost to allowed domains. Than replace open key in https://github.com/mkrentovskiy/wa/blob/master/priv/www/index.html#L92 and add 
+secret key to local.sys.config into recaptcha_key param.
+
 Next step - http://dadata.ru/ (data quality as a service). If you don't need its suggestions, just remove it code from 
 https://github.com/mkrentovskiy/wa/blob/master/priv/www/index.html#L143-L147 and https://github.com/mkrentovskiy/wa/blob/master/priv/www/js/app.js#L30-L40. 
 Otherwise you must get your own personal API key from it site. Don't be a jerk using my one. :) Key must be writen to 
