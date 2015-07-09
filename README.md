@@ -6,8 +6,9 @@ This project was targetting on creation the starting point for web-developers fo
 Installation quest
 ------------------
 
-* You need install PostgreSQL (9.4 or higher), Erlang (better R17, R18 has some unpleasand issues with deps). Redis currently not used, but we can. :)
-* Next - install and build application:
+You need install PostgreSQL (9.4 or higher), Erlang (better R17, R18 has some unpleasand issues with deps). Redis currently not used, but we can. :)
+
+Next - install and build application:
 
     git clone https://github.com/mkrentovskiy/wa.git
     cd wa
@@ -19,7 +20,7 @@ Installation quest
     cp priv/sys.config priv/local.sys.config
     make run-local
 
-* ... and its not work! :) We need some configuration steps:
+... and its not work! :) We need some configuration steps:
 
 Configure database:
 
