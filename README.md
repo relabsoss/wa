@@ -14,7 +14,7 @@ Next - install and build application:
     cd wa
     make
     ...
-    (here we can get troubles with merl cause some rebar spesies. Just cd deps/merl; make; nano ebin/merl.app 
+    (here we can get troubles with merl cause some rebar species. Just cd deps/merl; make; nano ebin/merl.app 
     and add merl_tests.beam to modules, after that repeat make in application top)
     ...
     cp priv/sys.config priv/local.sys.config
