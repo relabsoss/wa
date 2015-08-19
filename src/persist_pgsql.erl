@@ -2,11 +2,7 @@
 -behaviour(gen_server).
 -behaviour(poolboy_worker).
 
-<<<<<<< Updated upstream
--export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, field/3, field/4]).
-=======
 -export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, prepare/2, batch/2, field/3, field/4]).
->>>>>>> Stashed changes
 -export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
