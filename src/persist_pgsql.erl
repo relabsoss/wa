@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 -behaviour(poolboy_worker).
 
--export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, prepare/2, field/3, field/4]).
+-export([q/2, q/3, qi/2, ql/2, qs/2, qe/3, prepare/2, batch/2, field/3, field/4]).
 -export([start_link/1, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
@@ -56,6 +56,11 @@ prepare(Pool, Query) ->
         end).
 
 
+batch(Pool, QueryList) -> 
+    poolboy:transaction(Pool, fun(Worker) ->
+        gen_server:call(Worker, {batch, QueryList}, infinity)
+    end).
+
 field(Row, Column, Columns) ->
     ColumnB = list_to_binary(Column),
     lists:filter(fun({C, _}) -> C#column.name == ColumnB end, 
@@ -72,9 +77,6 @@ field(Row, Column, Columns, Value) ->
 % gen_server
 %
 
-handle_call({q, _Query}, _From, {undefine, _} = State) -> 
-    {reply, {error, noconnection}, State};
-
 handle_call({q, Query}, _From, {C, _} = State) -> 
     case epgsql:squery(C, Query) of
         {ok, Count} -> {reply, {ok, Count}, State};
@@ -82,9 +84,6 @@ handle_call({q, Query}, _From, {C, _} = State) ->
         {ok, _Count, Columns, Rows} -> {reply, {ok, {Columns, Rows}}, State};
         Err -> ?ERROR("PostgreSQL error ~p - ~p", [Query, Err]), {reply, {error, Err}, State}
     end;
-
-handle_call({qe, _Query, _Params}, _From, {undefine, _} = State) -> 
-    {reply, {error, noconnection}, State};
 
 handle_call({qe, Query, Params}, _From, {C, _} = State) -> 
     case epgsql:equery(C, Query, Params) of
@@ -104,6 +103,18 @@ handle_call({prepare, Query}, _From, {C, _} = State) ->
             {reply, {error, Reason}, State};
         Result -> {reply, Result, State}
     end;
+
+handle_call({batch, QueryList}, _From, {C, _} = State) -> 
+    case check_bulk_result(epgsql:execute_batch(C, QueryList)) of
+        {ok, Result} ->
+            {reply, {ok, Result}, State};
+        {error, Result} ->
+            ?ERROR("Batch queries fails"),
+            {reply, {error, Result}, State}
+    end;
+
+handle_call(_, _From, {undefine, _} = State) -> 
+    {reply, {error, noconnection}, State};
 
 handle_call(_Msg, _From, State) -> 
     {reply, ok, State}.
@@ -164,3 +175,13 @@ reconnect(Reason, Params) ->
     ?ERROR("Error in connection to PgSQL server - ~p", [Reason]),
     ?AFTER(?RECONNECT_TIMEOUT, reconnect),
     {noreply, {undefine, Params}}.
+
+
+check_bulk_result(Results) ->
+    check_bulk_result(Results, {ok, []}).
+
+check_bulk_result([], Acc) -> Acc;
+check_bulk_result([{error, Error}|Results], {Status, Acc}) ->
+    check_bulk_result(Results, {error, Acc++[{error, Error}]});
+check_bulk_result([{ok, Result}|Results], {Status, Acc}) ->
+    check_bulk_result(Results, {Status, Acc++[{ok, Result}]}).

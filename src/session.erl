@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 -export([check/1, process/3, random/0, pwd_to_db_pwd/1, smd5/1]).
--export([social/3, current/2]).
+-export([social/3, current/2, user_info/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("wa.hrl").
@@ -33,6 +33,10 @@ social(Provider, Props, Req) ->
 
 current(Pid, URL) ->
     gen_server:cast(Pid, {current, URL}).
+
+user_info(Pid) ->
+    gen_server:call(Pid, user_info).
+
     
 %
 % external
@@ -52,7 +56,7 @@ init([SID]) ->
         timer => ?SHORT_SESSION,
         auth => false,
         mail => undefined,
-        info => [],
+        info => #{},
         fail_count => 0,
         token => <<>>,
         current_page => <<"/">> }}.
@@ -60,6 +64,11 @@ init([SID]) ->
 %
 % gen_server
 %
+
+handle_call(user_info, _From, State) ->
+    {reply, #{mail => maps:get(mail, State),
+              auth => maps:get(auth, State),
+              info => maps:get(info, State)}, State};
 
 handle_call(info, _From, State) ->
     {ok, cancel} = timer:cancel(maps:get(time_to_die, State)),
@@ -120,7 +129,7 @@ pass(false, [<<"login">>], Req, State) ->
                     {[{result, ok}], Req1, State#{ 
                             auth := true, 
                             mail := M, 
-                            info := [{fname, FN}, {lname, LN}], 
+                            info := #{fname => FN, lname => LN}, 
                             timer := ?LONG_SESSION 
                         }};
                 _ ->
@@ -167,7 +176,7 @@ pass(false, [<<"reg">>], Req, State) ->
                                     {[{result, ok}], Req2, State#{ 
                                             mail := SMail, 
                                             token := Token, 
-                                            info := [{fname, SFName}, {lname, SLName}], 
+                                            info := #{fname => SFName, lname => SLName}, 
                                             timer := ?MEDIUM_SESSION 
                                         }}
                             end
@@ -246,8 +255,8 @@ pass(false, [<<"update">>], Req, State) ->
 
 pass(true, [<<"user">>, <<"info">>], Req, #{ mail := Mail, info := Info } = State) ->
     Token = random(),
-    Socials = socials_out(persist:list_social_link(pgdb, Mail)), 
-    R = lists:flatten([{result, ok}, {mail, Mail}, {token, Token}, Info, Socials]),
+    {social, Socials} = socials_out(persist:list_social_link(pgdb, Mail)), 
+    R = #{result => ok, mail => Mail, token => Token, info => Info, social => Socials},
     {R, Req, State#{ token := Token }};
 
 pass(true, [<<"update">>], Req, State) ->
@@ -273,7 +282,7 @@ pass(true, [<<"logout">>], Req, State) ->
     {[{result, ok}], Req, State#{ 
             auth := false, 
             mail := undefinded, 
-            info := [], 
+            info := #{}, 
             fail_count := 0, 
             timer := ?SHORT_SESSION
         }};
@@ -299,7 +308,7 @@ update_password(Mail, Info, Pwd, Req, State) ->
                                     {[{result, ok}], Req, State#{ 
                                             auth := true, 
                                             mail := M, 
-                                            info := [{fname, FN}, {lname, LN}], 
+                                            info := #{fname => FN, lname => LN}, 
                                             timer := ?LONG_SESSION 
                                         }};
                                 _ ->
@@ -371,8 +380,8 @@ pass_social(Provider, Props, Req, State) ->
                                     State#{ 
                                         auth := true,
                                         mail := Mail, 
-                                        info := [{fname, maps:get(fname, UserInfo)}, 
-                                                 {lname, maps:get(lname, UserInfo)}],
+                                        info := #{fname => maps:get(fname, UserInfo), 
+                                                  lname => maps:get(lname, UserInfo)},
                                         timer := ?LONG_SESSION };
                                 _ ->
                                     State
@@ -383,7 +392,7 @@ pass_social(Provider, Props, Req, State) ->
                             State#{ 
                                 auth := true,
                                 mail := Mail, 
-                                info := [{fname, FName}, {lname, LName}],
+                                info := #{fname => FName, lname => LName},
                                 timer := ?LONG_SESSION }
                     end;
                 Mail ->    
@@ -394,7 +403,7 @@ pass_social(Provider, Props, Req, State) ->
                             State#{ 
                                 auth := true,
                                 mail := Mail, 
-                                info := [{fname, FName}, {lname, LName}],
+                                info := #{fname => FName, lname => LName},
                                 timer := ?LONG_SESSION };
                         _ ->
                             State

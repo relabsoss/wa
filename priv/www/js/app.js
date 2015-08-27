@@ -100,9 +100,11 @@
                     if(r.result == 'ok') { 
                         $(".item.user.valid").show(); 
                         this.mail = r.mail;                                            
-                        $(['mail', 'fname', 'lname']).map(function(_k, v) {
-                                $(".u_" + v, $.app.user.ui).text(r[v]);
-                            });
+                        $(".u_mail", $.app.user.ui).text(r.mail || "");
+                        if(r.info) {
+                            $(".u_fname", $.app.user.ui).text(r.info.fname || "");
+                            $(".u_lname", $.app.user.ui).text(r.info.lname || "");
+                        }
                         $("#_update_token").val(r.token);
                         $.app.user.socials(r);
                     } else { 
@@ -122,12 +124,12 @@
                             'vk.com': 'vk' };
 
                 var i = $("<div class='item'> \
-                        <div class='middle aligned content'> \
-                            <i class='" + net[(a[1])] + " icon'></i> \
-                             " + strip_html(v.title)  + " \
+                        <div class='right floated content'> \
+                            <button class='circular ui mini icon button'><i class='trash icon'></i></button> \
                         </div> \
-                        <div class='middle right aligned content'> \
-                            <button class='circular ui icon button'><i class='trash icon'></i></button> \
+                        <i class='" + net[(a[1])] + " icon'></i> \
+                        <div class='content'> \
+                             " + strip_html(v.title)  + " \
                         </div> \
                     </div>");
                 $("button", i).api({
@@ -260,8 +262,7 @@
             this.WS.onclose = null;
             this.WS.onerror = null;
 
-            if(this.WS.readyState == this.WS.OPEN) 
-                this.WS.close();
+            if(this.WS.readyState == this.WS.OPEN) this.WS.close();
         }
         this.WS = new WebSocket( 
             (window.location.protocol == "https:" ? "wss" : "ws") + 
@@ -271,7 +272,7 @@
                 $.app.ui.status("green", "Connected"); 
             };
         this.WS.onmessage = function(m) { 
-                this.handle_cast(m.data && m.data.length > 1 ? $.parseJSON(m.data) : {req: "none"}); 
+                this.handle_cast(m.data && m.data.length > 1 ? $.parseJSON(m.data) : {op: "none"}); 
             };
         this.WS.onclose = function() { 
                 $.app.ui.status("orange", "Disconnected"); 
@@ -284,8 +285,8 @@
     }
 
     $.app.ws.req = function(m, idem) {
-        if(WS && WS.readyState == WS.OPEN) { WS.send(JSON.stringify(m)); }
-        else if(idem) repeat(function() { send(m, idem); }); 
+        if(this.WS && this.WS.readyState == this.WS.OPEN) { this.WS.send(JSON.stringify(m)); }
+        else if(idem) repeat(function() { $.app.ws.req(m, idem); }); 
     }
     
     $.app.ws.handle_cast = function(obj) {

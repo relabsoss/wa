@@ -10,9 +10,9 @@
 init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
-
 websocket_init(_TransportName, Req, _Opts) ->
-    {ok, Req, []}.
+    {ok, Req1, Pid} = session:check(Req),
+    {ok, Req, #{ session => Pid }}.
 
 
 websocket_handle({text, Msg}, Req, State) ->
@@ -20,7 +20,7 @@ websocket_handle({text, Msg}, Req, State) ->
     {ok, Req, NewState};
 
 websocket_handle(Data, Req, State) ->
-    ?DBG("Unknown data handled: ~p", [Data]),
+    ?INFO("Unknown data handled: ~p", [Data]),
     {ok, Req, State}.
 
 
@@ -29,15 +29,15 @@ websocket_info({send, Msg}, Req, State) ->
     {reply, {text, Reply}, Req, State};
 
 websocket_info(Info, Req, State) ->
-    ?DBG("Unknown info handled: ~p", [Info]),
+    ?INFO("Unknown info handled: ~p", [Info]),
     {ok, Req, State}.
 
 
 websocket_terminate(_Reason, _Req, _State) ->
     ok.
 
-
 % default
+
 process(Msg, State) -> 
-    ?DBG("Unknown message ~p", [Msg]), 
+    ?INFO("Unknown message ~p", [Msg]), 
     State. 
