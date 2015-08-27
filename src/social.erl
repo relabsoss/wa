@@ -6,7 +6,7 @@
 -include_lib("deps/alog/include/alog.hrl").
 
 
-fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = Props) ->
+fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = _Props) ->
     case restc:request(get, json, "https://graph.facebook.com/me", [200], 
             [{"Authorization", binary_to_list(<<Prefix/binary, " ", Token/binary>>)}], 
             [{<<"access_token">>, Token},
@@ -35,7 +35,7 @@ fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = Props) 
             Error
     end;
 
-fetch(<<"google">>, #{ access_token := Token, token_type := Prefix } = Props) ->
+fetch(<<"google">>, #{ access_token := Token, token_type := Prefix } = _Props) ->
     case restc:request(get, json, "https://www.googleapis.com/oauth2/v1/userinfo", [200], 
             [{"Authorization", binary_to_list(<<Prefix/binary, " ", Token/binary>>)}]) of
         {ok, _, _, Resp} ->
@@ -74,7 +74,10 @@ fetch(<<"vk">>, #{ access_token := Token, token_type := Prefix } = Props) ->
                     Id = integer_to_binary(proplists:get_value(<<"uid">>, R, 0)),
                     FName = proplists:get_value(<<"first_name">>, R, <<>>),
                     LName = proplists:get_value(<<"last_name">>, R, <<>>),
-                    Mail = maps:get(email, Props, <<"id", Id/binary, "@vk.com">>),
+                    Mail = case maps:get(email, Props, undefined) of
+                        undefined -> <<"id", Id/binary, "@vk.com">>;
+                        Val -> Val
+                    end,
                     {ok, #{
                         id => <<Id/binary, "@vk.com">>,
                         mail => Mail,

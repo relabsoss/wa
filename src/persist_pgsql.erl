@@ -181,7 +181,7 @@ check_bulk_result(Results) ->
     check_bulk_result(Results, {ok, []}).
 
 check_bulk_result([], Acc) -> Acc;
-check_bulk_result([{error, Error}|Results], {Status, Acc}) ->
+check_bulk_result([{error, Error}|Results], {_Status, Acc}) ->
     check_bulk_result(Results, {error, Acc++[{error, Error}]});
 check_bulk_result([{ok, Result}|Results], {Status, Acc}) ->
     check_bulk_result(Results, {Status, Acc++[{ok, Result}]}).

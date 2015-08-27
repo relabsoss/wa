@@ -12,7 +12,7 @@ init({tcp, http}, _Req, _Opts) ->
 
 websocket_init(_TransportName, Req, _Opts) ->
     {ok, Req1, Pid} = session:check(Req),
-    {ok, Req, #{ session => Pid }}.
+    {ok, Req1, #{ session => Pid }}.
 
 
 websocket_handle({text, Msg}, Req, State) ->
