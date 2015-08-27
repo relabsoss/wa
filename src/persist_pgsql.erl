@@ -61,7 +61,6 @@ batch(Pool, QueryList) ->
         gen_server:call(Worker, {batch, QueryList}, infinity)
     end).
 
-
 field(Row, Column, Columns) ->
     ColumnB = list_to_binary(Column),
     lists:filter(fun({C, _}) -> C#column.name == ColumnB end, 
@@ -93,6 +92,9 @@ handle_call({qe, Query, Params}, _From, {C, _} = State) ->
         {ok, _Count, Columns, Rows} -> {reply, {ok, {Columns, Rows}}, State};
         Err -> ?ERROR("PostgreSQL error ~p - ~p", [Query, Err]), {reply, {error, Err}, State}
     end;
+
+handle_call({prepare, _Query}, _From, {undefine, _} = State) -> 
+    {reply, {error, noconnection}, State};
 
 handle_call({prepare, Query}, _From, {C, _} = State) -> 
     case epgsql:parse(C, Query) of
