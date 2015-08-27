@@ -1,0 +1,10 @@
+{% extends "index.html" %}
+
+{% block menu %}
+{% endblock %}
+
+{% block body %}
+{% endblock %}
+
+{% block script %}
+{% endblock %}

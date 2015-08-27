@@ -114,7 +114,8 @@ check(Options, Req) ->
                             {ok, #{
                                 access_token => proplists:get_value(<<"access_token">>, Body, <<>>),
                                 token_type => proplists:get_value(<<"token_type">>, Body, <<"bearer">>),
-                                refresh_token => proplists:get_value(<<"refresh_token">>, Body, undefined)
+                                refresh_token => proplists:get_value(<<"refresh_token">>, Body, undefined),
+                                email => proplists:get_value(<<"email">>, Body, undefined)
                             }, Req1};
                         Error ->
                             ?ERROR("Error in OAuth access tocken request ~p", [Error]),

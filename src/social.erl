@@ -74,9 +74,10 @@ fetch(<<"vk">>, #{ access_token := Token, token_type := Prefix } = Props) ->
                     Id = integer_to_binary(proplists:get_value(<<"uid">>, R, 0)),
                     FName = proplists:get_value(<<"first_name">>, R, <<>>),
                     LName = proplists:get_value(<<"last_name">>, R, <<>>),
+                    Mail = maps:get(email, Props, <<"id", Id/binary, "@vk.com">>),
                     {ok, #{
                         id => <<Id/binary, "@vk.com">>,
-                        mail => <<"id", Id/binary, "@vk.com">>,
+                        mail => Mail,
                         fname => FName,
                         lname => LName,
                         title => <<FName/binary, " ", LName/binary>>,
