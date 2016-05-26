@@ -5,7 +5,7 @@
 -export([has_social_link/2, add_social_link/3, update_social_link/3, del_social_link/2, 
          list_social_link/2]).
 
--include_lib("deps/alog/include/alog.hrl").
+-include_lib("wa.hrl").
 
 -define(OR_EMPTY(Action), case Action of {ok, {_, Strs}} -> Strs; Any -> ?ERROR("~p", [Any]), [] end).
 

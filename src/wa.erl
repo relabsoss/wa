@@ -1,12 +1,10 @@
 -module(wa).
-
 -export([start/0]).
 
-
 start() ->
+    application:ensure_all_started(lager),
     lists:foldl(fun(I, _) -> ok = appstart(I) end, [], [
             crypto,
-            alog,
             gproc,
             ranch,
             cowlib,

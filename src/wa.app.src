@@ -1,11 +1,20 @@
 {application, wa,
  [
-  {description, ""},
+  {description, "Erlang base web-application"},
   {vsn, "1"},
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  crypto,
+                  gproc,
+                  ranch,
+                  cowlib,
+                  cowboy,
+                  asn1,
+                  public_key,
+                  ssl,
+                  gun
                  ]},
   {mod, { wa_app, []}},
   {env, []}

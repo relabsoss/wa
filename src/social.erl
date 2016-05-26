@@ -3,7 +3,6 @@
 -export([fetch/2]).
 
 -include("wa.hrl").
--include_lib("deps/alog/include/alog.hrl").
 
 
 fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = _Props) ->

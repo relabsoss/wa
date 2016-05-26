@@ -20,6 +20,19 @@
 -define(PV(Key, Set, Default), proplists:get_value(Key, Set, Default)).
 
 %
+% Logger
+%
+
+-define(ERROR(Msg), lager:error(Msg, [])).
+-define(ERROR(Msg, Params), lager:error(Msg, Params)).
+-define(INFO(Msg), lager:info(Msg, [])).
+-define(INFO(Msg, Params), lager:info(Msg, Params)).
+-define(WARNING(Msg), lager:warning(Msg, [])).
+-define(WARNING(Msg, Params), lager:warning(Msg, Params)).
+-define(DEBUG(Msg), lager:debug(Msg, [])).
+-define(DEBUG(Msg, Params), lager:debug(Msg, Params)).
+
+%
 % Pub/Sub
 %
 
@@ -30,12 +43,14 @@
 -define(SUB(Event), pubsub:sub(Event)).
 -define(UNSUB(Event), pubsub:unsub(Event)).
 -define(LOOKUP_SUB(Reg), gproc:lookup_pids({p, l, Reg})).
+-define(IS_SUB(Event), lists:any(fun({P, _}) -> P =:= self() end, gproc:lookup_local_properties(Event))).
 
 %
 % Vars
 %
 
--define(RECONNECT_TIMEOUT, 5 * 1000).
+-define(STEP, 1000).
+-define(RECONNECT_TIMEOUT, 5 * ?STEP).
 
 %
 % Users
@@ -43,6 +58,7 @@
 
 -define(SIDC, <<"_SID">>).
 -define(MAX_FAIL_COUNT, 16).
+
 -define(REAL_IP(Req), cowboy_req:header(<<"X-Real-IP">>, Req, <<"127.0.0.1">>)).
 
 -define(RE_MAIL, "^.+@[^@]+\\.[^@]{2,}$").
@@ -54,7 +70,7 @@
 
 -define(S2MS(S), S * 1000).
 
--define(TEMPLATES, [
-        {"reg", template_reg, template_reg_subject},
-        {"reset", template_reset, template_reset_subject}
-    ]).
+-define(MAIL_TEMPLATES, [
+    {"reg", template_reg, template_reg_subject},
+    {"reset", template_reset, template_reset_subject}
+  ]).

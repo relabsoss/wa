@@ -4,7 +4,6 @@
 -export([init/3, handle/2, terminate/3]).
 
 -include("wa.hrl").
--include_lib("deps/alog/include/alog.hrl").
 
 
 init({tcp, http}, Req, Opts) ->

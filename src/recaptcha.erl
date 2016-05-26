@@ -3,7 +3,6 @@
 -export([check/3]).
 
 -include("wa.hrl").
--include_lib("deps/alog/include/alog.hrl").
 
 -define(URL, "https://www.google.com/recaptcha/api/siteverify").
 
