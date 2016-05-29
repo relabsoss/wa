@@ -1,10 +1,12 @@
 -module(social_handler).
 -behaviour(cowboy_http_handler).
-
--export([init/3, handle/2, terminate/3]).
+-export([
+          init/3, 
+          handle/2, 
+          terminate/3
+        ]).
 
 -include("wa.hrl").
-
 
 init({tcp, http}, Req, Opts) ->
     {Provider, Req2} = cowboy_req:binding(provider, Req),

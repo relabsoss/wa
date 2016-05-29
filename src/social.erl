@@ -1,9 +1,9 @@
 -module(social).
-
--export([fetch/2]).
+-export([
+          fetch/2
+        ]).
 
 -include("wa.hrl").
-
 
 fetch(<<"facebook">>, #{ access_token := Token, token_type := Prefix } = _Props) ->
     case restc:request(get, json, "https://graph.facebook.com/me", [200], 

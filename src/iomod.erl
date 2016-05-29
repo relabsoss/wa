@@ -3,7 +3,11 @@
           in/1, 
           out/1, 
           out_json/2, 
-          out_html/4
+          out_html/4,
+          strip/1,
+          pwd_to_db_pwd/1,
+          plain_pwd_to_db_pwd/1,
+          random/0
         ]).
 
 -include("wa.hrl").
@@ -57,3 +61,21 @@ out_html(Status, Tmpl, Context, Req) ->
       ?ERROR("Can't render template ~p for context ~p - ~p", [Tmpl, Context, Any]),
       Req
   end.
+
+strip(S) -> 
+  re:replace(S, "[<>&/]+", "", [global,{return, binary}]).
+
+pwd_to_db_pwd(MD5Bin) ->
+  smd5(<<MD5Bin/binary, (?CONFIG(salt, <<"deadbeef">>))/binary>>).
+
+plain_pwd_to_db_pwd(Bin) when is_binary(Bin) ->
+  plain_pwd_to_db_pwd(binary_to_list(Bin));
+plain_pwd_to_db_pwd(L) ->
+  pwd_to_db_pwd(list_to_binary(smd5(L))).
+
+smd5(S) ->
+  lists:flatten([io_lib:format("~2.16.0b", [C]) || <<C>> <= erlang:md5(S)]).
+
+random() ->
+  base64:encode(crypto:strong_rand_bytes(?CONFIG(sid_size, 64))).
+
