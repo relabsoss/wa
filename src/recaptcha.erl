@@ -22,7 +22,7 @@ api_call(Key, IP, Response) ->
         <<"secret">> => Key,
         <<"remoteip">> => IP, 
         <<"response">> => Response
-      } of
+      }) of
     {ok, _Status, _Headers, Body} ->
       ?INFO("ReCAPTCHA results - ~p", [Body]),
       maps:get(<<"success">>, Body, false);

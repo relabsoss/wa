@@ -3,9 +3,6 @@
 -export([
           check/1, 
           process/3, 
-          random/0, 
-          pwd_to_db_pwd/1, 
-          smd5/1,
           social/3, 
           current/2, 
           user_info/1,
@@ -29,7 +26,7 @@ check(Req) ->
       {ok, Req2, Pid}
   catch 
     _:_ ->
-      NewSID = random(),
+      NewSID = iomod:random(),
       {ok, Pid} = start([NewSID]),
       Req2 = cowboy_req:set_resp_cookie(?SIDC, NewSID, [{max_age, ?SHORT_SESSION}, {path, "/"}], Req1),
       {ok, Req2, Pid}
@@ -139,7 +136,7 @@ pass(false, [<<"login">>], Req, State) ->
           {?OK, Req1, State#{ 
               auth := true, 
               mail := M, 
-              info := #{fname => FN, lname => LN}, 
+              info := #{ fname => FN, lname => LN }, 
               timer := ?LONG_SESSION 
             }};
         _ ->
@@ -177,16 +174,16 @@ pass(false, [<<"reg">>], Req, State) ->
                 true ->
                   {?ER(already), Req2, State};    
                 false ->
-                  SMail = strip(Mail),
-                  SFName = strip(FName),
-                  SLName = strip(LName),
+                  SMail = iomod:strip(Mail),
+                  SFName = iomod:strip(FName),
+                  SLName = iomod:strip(LName),
                   Token = iomod:random(),
                   ?SUB(Token),
                   mail_sender:mail(SMail, template_reg, [{token, Token}]),
                   {?OK, Req2, State#{ 
                       mail := SMail, 
                       token := Token, 
-                      info := #{fname => SFName, lname => SLName}, 
+                      info := #{ fname => SFName, lname => SLName }, 
                       timer := ?MEDIUM_SESSION 
                     }}
               end
@@ -271,7 +268,7 @@ pass(true, [<<"user">>, <<"info">>], Req, #{ mail := Mail, info := Info } = Stat
          social => Socials },
   {R, Req, State#{ token := Token }};
 pass(true, [<<"update">>], Req, State) ->
-  check_token(Req, State, fun(Req1, ValuesL) ->
+  check_token(Req, State, fun(Req1, Values) ->
       Pwd = maps:get(<<"pass">>, Values, <<"123">>),
       DBPwd = iomod:plain_pwd_to_db_pwd(Pwd),
       case persist:update_user(pgdb, maps:get(mail, State), DBPwd) of
@@ -315,7 +312,7 @@ update_password(Mail, Info, Pwd, Req, State) ->
                   {?OK, Req, State#{ 
                       auth := true, 
                       mail := M, 
-                      info := #{fname => FN, lname => LN}, 
+                      info := #{ fname => FN, lname => LN }, 
                       timer := ?LONG_SESSION 
                     }};
                 _ ->
@@ -393,8 +390,8 @@ pass_social(Provider, Props, Req, State) ->
                   State#{ 
                     auth := true,
                     mail := Mail, 
-                    info := #{fname => maps:get(fname, UserInfo), 
-                              lname => maps:get(lname, UserInfo)},
+                    info := #{ fname => maps:get(fname, UserInfo), 
+                               lname => maps:get(lname, UserInfo) },
                     timer := ?LONG_SESSION };
                 _ ->
                   State
@@ -405,7 +402,7 @@ pass_social(Provider, Props, Req, State) ->
                 State#{ 
                   auth := true,
                   mail := Mail, 
-                  info := #{fname => FName, lname => LName},
+                  info := #{ fname => FName, lname => LName },
                   timer := ?LONG_SESSION }
           end;
         Mail ->    
@@ -416,7 +413,7 @@ pass_social(Provider, Props, Req, State) ->
               State#{ 
                 auth := true,
                 mail := Mail, 
-                info := #{fname => FName, lname => LName},
+                info := #{ fname => FName, lname => LName },
                 timer := ?LONG_SESSION };
               _ ->
                 State

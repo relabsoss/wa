@@ -57,10 +57,9 @@ cascade(Map, Fields, Op) ->
     end, Map).
 
 out_json(Msg, Req) ->
-  {Type, R} = out(Msg),
   {ok, Req1} = cowboy_req:reply(200, [
         {<<"content-type">>, <<"application/json">>}
-      ], R, Req),
+      ], out(Msg), Req),
   Req1.
 
 out_html(Status, Tmpl, Context, Req) ->
@@ -110,7 +109,7 @@ concat([], _) ->
 concat([E], _) -> 
   E;
 concat([A1, A2 | T], Del) -> 
-  concat([<<A1/binary, Del/binary, A2/binary>> | T]).
+  concat([<<A1/binary, Del/binary, A2/binary>> | T], Del).
 
 floor(X) when X < 0 ->
   T = trunc(X),

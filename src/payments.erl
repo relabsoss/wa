@@ -73,7 +73,7 @@ code_change(_OldVsn, State, _Extra) ->
 % check payment
 % 
 
-check(Mail, Token, Opts) ->
+check(Mail, Token, _Opts) ->
   case persist:get_payment(pgdb, Mail, Token) of
     #{ <<"state">> := <<"start">> } ->
       case paypal_api:obtain_details(paypal, #{ token => Token }) of
@@ -101,4 +101,3 @@ check(Mail, Token, Opts) ->
     _ ->
       no_job
   end.
-  

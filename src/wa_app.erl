@@ -38,7 +38,7 @@ compile_templates(Priv) ->
       {ok, Files} = file:list_dir(Dir),
       ValidFiles = lists:filter(fun(I) -> filename:extension(I) =:= ".dtl" end, Files),
       R = [{F, erlydtl:compile_file(
-          Dir ++ F, 
+          filename:join(Dir, F), 
           list_to_atom(re:replace(F, "\\.", "_", [{return, list}])), 
           [{auto_escape, false}])} || F <- ValidFiles],
       ?INFO("Compile web dtl's - ~p", [R])

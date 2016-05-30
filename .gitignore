@@ -3,6 +3,7 @@
 .DS_Store
 /deps
 /libs
+/log
 /logs
 *.swp
 *.dump

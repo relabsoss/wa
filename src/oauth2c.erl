@@ -1,8 +1,18 @@
 -module(oauth2c).
 -export([
-          access_token/5,
+          retrieve_access_token/5,
           request/7
         ]).
+
+retrieve_access_token(Type, Url, ID, Secret, Scope) ->
+  Client = #{
+      grant_type => Type,
+      auth_url   => Url,
+      id         => ID,
+      secret     => Secret,
+      scope      => Scope
+    },
+  do_retrieve_access_token(Client).
 
 request(Method, Type, Url, Expect, Headers, Body, Client) ->
   case do_request(Method, Type, Url, Expect, Headers, Body, Client) of

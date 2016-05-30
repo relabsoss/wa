@@ -1,8 +1,8 @@
 -module(restc).
--export([request/5]).
+-export([request/6]).
 
 request(Method, Type, Url, InHeaders, Expect, Body) ->
-  maps:merge(InHeaders, #{
+  Headers = maps:merge(InHeaders, #{
       <<"Accept">> => get_access_type(Type) ++ ", */*;q=0.9",
       <<"Content-Type">> => get_content_type(Type)
     }),  
@@ -16,23 +16,23 @@ request(Method, Type, Url, InHeaders, Expect, Body) ->
       gun:Method(
           ConnPid, 
           Path ++ QS, 
-          maps:put("content-length", byte_size(EncBody), Headers), 
+          maps:to_list(maps:put("content-length", byte_size(EncBody), Headers)), 
           EncBody);
     false when is_list(Body) and (Body =/= []) and (length(QS) =:= 0) ->
       gun:Method(
           ConnPid, 
           lists:concat([Path, "?", binary_to_list(cow_qs:qs(Body))]), 
-          Headers);
+          maps:to_list(Headers));
     false when is_list(Body) and (Body =/= []) and (length(QS) =/= 0) ->
       gun:Method(
           ConnPid, 
           lists:concat([Path, QS, "&", binary_to_list(cow_qs:qs(Body))]), 
-          Headers);
+          maps:to_list(Headers));
     false -> 
       gun:Method(
           ConnPid, 
           Path ++ QS, 
-          Headers)
+          maps:to_list(Headers))
   end,
   Resp = case gun:await(ConnPid, StreamRef) of
     {response, fin, Status, RespHeaders} ->
@@ -47,10 +47,12 @@ request(Method, Type, Url, InHeaders, Expect, Body) ->
               {ok, Status, RespHeaders, parse(RespHeaders, RespBody)};
             false ->
               {error, Status, RespHeaders, parse(RespHeaders, RespBody)}               
+          end;
         Error ->
           {error, Error}
       end;
-    Any -> Any
+    Any -> 
+      Any
   end,
   gun:shutdown(ConnPid),
     
@@ -63,27 +65,34 @@ get_content_type(qs)    -> "application/x-www-form-urlencoded";
 get_content_type(html)  -> "text/html";
 get_content_type(_)     -> "application/json".
 
-encode_body(ws, Body)   -> cow_qs:qs(Body);
-encode_body(html, Body) -> Body;
-encode_body(_, Body)    -> iomod:out(Body).
+encode_body(ws, Body) -> 
+  cow_qs:qs(Body);
+encode_body(html, Body) -> 
+  Body;
+encode_body(_, Body) -> 
+  iomod:out(Body).
 
-parse(Headers, Body) ->
-  ?INFO(""),
-  Unzip = case proplists:get_value(<<"content-encoding">>, Headers, <<"plain">>) of
-    <<"gzip">> -> zlib:gunzip(Body);
-    _ -> Body
+parse(HeadersL, Body) ->
+  Headers = maps:from_list(HeadersL),
+  Unzip = case maps:get(<<"content-encoding">>, Headers, <<"plain">>) of
+    <<"gzip">> -> 
+      zlib:gunzip(Body);
+    _ -> 
+      Body
   end,
-  Type = case lists:keyfind(<<"content-type">>, 1, Headers) of
-    false    -> "application/json";
-    {_, Val} -> Val
-  end,
-  CType = case string:tokens(binary_to_list(Type), ";") of
-    [CVal]    -> CVal;
-    [CVal, _] -> CVal
-  end,
-  parse_body(CType, Unzip).
+  case maps:get(<<"content-type">>, Headers, undefined) of
+    undefined -> 
+      parse_body("application/json", Unzip);
+    Type -> 
+      CType = iomod:take_one(string:tokens(binary_to_list(Type), ";")),
+      parse_body(CType, Unzip)
+  end.
 
-parse_body("application/json", Body) -> iomod:in(Body); 
-parse_body("application/x-www-form-urlencoded", Body) -> cow_qs:parse_qs(Body);
-parse_body("text/plain", Body)       -> cow_qs:parse_qs(Body); % damn you, Facebook
-parse_body(_, Body)                  -> Body.
+parse_body("application/json", Body) -> 
+  iomod:in(Body); 
+parse_body("application/x-www-form-urlencoded", Body) -> 
+  cow_qs:parse_qs(Body);
+parse_body("text/plain", Body) -> 
+  cow_qs:parse_qs(Body); % damn you, Facebook
+parse_body(_, Body) -> 
+  Body.
