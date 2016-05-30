@@ -9,8 +9,6 @@
 -define(CHILD(I, Type, Param), {I, {I, start_link, Param}, permanent, 50, Type, [I]}).
 -define(CHILD(Id, I, Type, Param), {Id, {I, start_link, Param}, permanent, 50, Type, [I]}).
 
--define(BIN2INT(N), list_to_integer(binary_to_list(N))).
-
 %
 % Configuration
 %
@@ -70,7 +68,12 @@
 
 -define(S2MS(S), S * 1000).
 
+-define(PAYMENT_CHECK, 3 * 60).
+-define(PAYMENT_CHECK_MAX, 20).
+-define(WAIT_BEFORE_PAY, 1).
+
 -define(MAIL_TEMPLATES, [
     {"reg", template_reg, template_reg_subject},
     {"reset", template_reset, template_reset_subject}
   ]).
+

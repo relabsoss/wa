@@ -2,12 +2,18 @@
 -export([
           in/1, 
           out/1, 
+          cascade/3,
           out_json/2, 
           out_html/4,
           strip/1,
           pwd_to_db_pwd/1,
           plain_pwd_to_db_pwd/1,
-          random/0
+          random/0,
+          split/1,
+          concat/2,
+          floor/1,
+          ceiling/1,
+          take_one/1
         ]).
 
 -include("wa.hrl").
@@ -42,6 +48,14 @@ out(Msg) ->
       <<"{}">>
   end.
     
+cascade(Map, Fields, Op) ->
+  maps:map(fun(K, V) -> 
+      case lists:any(fun(I) -> I =:= K end, Fields) of
+        true -> ?MODULE:Op(V);
+        false -> V
+      end
+    end, Map).
+
 out_json(Msg, Req) ->
   {Type, R} = out(Msg),
   {ok, Req1} = cowboy_req:reply(200, [
@@ -79,3 +93,41 @@ smd5(S) ->
 random() ->
   base64:encode(crypto:strong_rand_bytes(?CONFIG(sid_size, 64))).
 
+split(Title) ->
+  case re:split(Title, " ", [{return, binary}]) of 
+    [N] -> 
+      {N, <<"">>};
+    [N1, N2] -> 
+      {N1, N2};
+    L -> 
+      [N2 | T] = lists:reverse(L), 
+      T1 = lists:reverse(T), 
+      {concat(T1, <<" ">>), N2}
+  end.
+
+concat([], _) -> 
+  <<>>;
+concat([E], _) -> 
+  E;
+concat([A1, A2 | T], Del) -> 
+  concat([<<A1/binary, Del/binary, A2/binary>> | T]).
+
+floor(X) when X < 0 ->
+  T = trunc(X),
+  case X - T == 0 of
+    true -> T;
+    false -> T - 1
+  end;
+floor(X) -> 
+  trunc(X).
+
+ceiling(X) when X < 0 -> 
+  trunc(X);
+ceiling(X) ->
+  T = trunc(X),
+  case X - T == 0 of
+    true -> T;
+    false -> T + 1
+  end.
+
+take_one([H | _]) -> H.

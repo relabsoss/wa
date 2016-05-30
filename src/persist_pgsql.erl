@@ -12,7 +12,7 @@
           batch/2, 
           field/3, 
           field/4,
-          to_map/2
+          to_map/2,
           start_link/1, 
           init/1, 
           handle_call/3, 
@@ -90,8 +90,9 @@ field(Row, Column, Columns, Value) ->
     _ -> false
   end.
 
-to_map(Cols, Rows) ->
-  [maps:from_list(lists:zip(Columns, tuple_to_list(Row))) || R <- Rows].
+to_map(Cols, Rows) -> 
+    Cs = [N || {_, N, _, _, _, _} <- Cols],
+    [maps:from_list(lists:zip(Cs, tuple_to_list(I))) || I <- Rows]. 
 
 %
 % gen_server

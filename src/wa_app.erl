@@ -16,6 +16,7 @@ start(_StartType, _StartArgs) ->
       {"/oauth/:provider/:action", social_handler, ?CONFIG(social, [])},    
       {"/auth/[...]", auth_handler, []},
       {"/events", events_handler, []},
+      {"/paypal/[...]", paypal_handler, ?CONFIG(payments, #{})},
       {"/[...]", cowboy_static, {dir,  filename:join(Priv, "www")}}
     ],
   Dispatch = cowboy_router:compile([{'_',  VRoutes}]),
