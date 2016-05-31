@@ -44,13 +44,12 @@ handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
 
 handle_cast({mail, To, Template, Params}, #{ 
-        url := URLB,
         domain := Domain, 
         from := From,
         subjects := Subjects,
-        priv_key := PrivKey 
+        method := Method, 
+        options := Options 
       } = State) ->
-  URL = binary_to_list(URLB),
   MParams = Params ++ [{mail_to, To}, {domain, Domain}],
 
   STemplate = proplists:get_value(Template, Subjects),
@@ -58,7 +57,27 @@ handle_cast({mail, To, Template, Params}, #{
   Subject = iolist_to_binary(USubject),
   {ok, UBody} = Template:render(MParams),
   Body = iolist_to_binary(UBody),
-    
+  
+  ?MODULE:Method(From, To, Subject, Body, Options),
+
+  {noreply, State};
+handle_cast(_Msg, State) -> 
+  {noreply, State}.
+
+handle_info(_Info, State) -> 
+  {noreply, State}.
+
+terminate(_Reason, _State) -> 
+  ok.
+
+code_change(_OldVsn, State, _Extra) -> 
+  {ok, State}.
+
+%
+% methods
+%
+
+mailgun(From, To, Subject, Body, #{ url := URL, priv_key := PrivKey }) ->  
   Base64 = base64:encode(<<"api:", PrivKey/binary>>),
   case restc:request(post, qs, URL, [200], 
       #{
@@ -74,16 +93,13 @@ handle_cast({mail, To, Template, Params}, #{
       ?INFO("Send mail to ~p with response ~p", [To, Resp]);
     Error ->
       ?ERROR("Can't send mail to ~p - ~p", [To, Error])
-  end,
-  {noreply, State};
-handle_cast(_Msg, State) -> 
-  {noreply, State}.
+  end.
 
-handle_info(_Info, State) -> 
-  {noreply, State}.
-
-terminate(_Reason, _State) -> 
-  ok.
-
-code_change(_OldVsn, State, _Extra) -> 
-  {ok, State}.
+smtp(From, To, Subject, Body, Options) ->
+  gen_smtp_client:send({
+    From, 
+    [To], 
+    <<"Subject: ", Subject/binary, "/r/n",
+      "From: ", From/binary, "/r/n",
+      "To: ", To/binary, "/r/n",
+      "/r/n", Body>>}, maps:to_list(Options)).  
