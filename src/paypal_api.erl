@@ -125,25 +125,11 @@ decode(Body, Process, T) ->
       error
   end.
 
-call(Values, Process, T, Params) ->
-  {ok, ConnPid} = gun:open(maps:get(server, Params), maps:get(port, Params)),
-  {ok, _Protocol} = gun:await_up(ConnPid),
-  StreamRef = gun:post(ConnPid, maps:get(url, Params), [], encode(Values, Params)),
-  Result = case gun:await(ConnPid, StreamRef) of
-    {response, fin, Status, RespHeaders} ->
-      ?WARNING("No data for request ~p : ~p", [Status, RespHeaders]),
-      error;
-    {response, nofin, Status, RespHeaders} ->
-      case gun:await_body(ConnPid, StreamRef) of
-        {ok, Body} -> 
-          decode(Body, Process, T);               
-        Error ->
-          ?ERROR("Error in getting request body ~p for status ~p and headers ~p", [Error, Status, RespHeaders]),
-          error
-      end;
-    {error, Error} ->
-      ?ERROR("Got ~p on post", [Error]),
+call(Values, Process, T, #{ url := URL } = Params) ->
+  case restc:request(post, qs, URL, [], [], encode(Values, Params)) of
+    {ok, _, _, Body} ->
+      decode(Body, Process, T);
+    Any ->
+      ?INFO("Got reply from PayPal - ~p", [Any]),
       error
-  end,
-  gun:shutdown(ConnPid),
-  Result.
+  end.

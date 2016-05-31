@@ -28,7 +28,7 @@ do_retrieve_access_token(#{
       grant_type := <<"password">> 
     } = Client) ->
   Payload = maps:with([grant_type, username, password, scope], Client),
-  case restc:request(post, percent, binary_to_list(AuthURL), [200], #{}, Payload) of
+  case restc:request(post, qs, binary_to_list(AuthURL), [200], #{}, Payload) of
     {ok, _, Headers, Body} ->
       AccessToken = maps:get(<<"access_token">>, Body),
       RefreshToken = maps:get(<<"refresh_token">>, Body, undefined),
@@ -54,7 +54,7 @@ do_retrieve_access_token(#{
   Payload = maps:with([grant_type, scope], Client),
   Auth = base64:encode(<<Id/binary, ":", Secret/binary>>),
   Header = #{ <<"Authorization">> => <<"Basic ", Auth/binary>> },
-  case restc:request(post, percent, binary_to_list(AuthURL), [200], Header, Payload) of
+  case restc:request(post, qs, binary_to_list(AuthURL), [200], Header, Payload) of
     {ok, _, Headers, Body} ->
       AccessToken = maps:get(<<"access_token">>, Body),
       TokenType = maps:get(<<"token_type">>, Body, <<>>),

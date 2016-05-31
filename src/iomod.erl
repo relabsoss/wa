@@ -13,7 +13,8 @@
           concat/2,
           floor/1,
           ceiling/1,
-          take_one/1
+          take_one/1,
+          keys_to_lower/1
         ]).
 
 -include("wa.hrl").
@@ -130,3 +131,11 @@ ceiling(X) ->
   end.
 
 take_one([H | _]) -> H.
+
+keys_to_lower(L) ->
+  [{to_lower(K), V} || {K, V} <- L].
+
+to_lower(B) when is_binary(B) ->
+  to_lower(binary_to_list(B));
+to_lower(S) ->
+  list_to_binary(string:to_lower(S)).

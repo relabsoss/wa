@@ -161,8 +161,10 @@ list_social_link(Pool, Mail) ->
   case persist_pgsql:qe(Pool, 
       "SELECT id, title, token FROM users_social WHERE en=TRUE AND mail=$1", 
       [Mail]) of
-    {ok, {H, List}} -> persists:to_map(H, List);
-    _Any -> []
+    {ok, {H, List}} -> 
+      persist_pgsql:to_map(H, List);
+    _Any -> 
+      []
   end.
 
 %

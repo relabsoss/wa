@@ -6,15 +6,9 @@
   {applications, [
                   kernel,
                   stdlib,
-                  crypto,
                   gproc,
-                  ranch,
-                  cowlib,
                   cowboy,
-                  asn1,
-                  public_key,
-                  ssl,
-                  gun
+                  hackney
                  ]},
   {mod, { wa_app, []}},
   {env, []}

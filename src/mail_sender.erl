@@ -60,7 +60,7 @@ handle_cast({mail, To, Template, Params}, #{
   Body = iolist_to_binary(UBody),
     
   Base64 = base64:encode(<<"api:", PrivKey/binary>>),
-  case restc:request(post, percent, URL, [200], 
+  case restc:request(post, qs, URL, [200], 
       #{
         <<"Authorization">> => <<"Basic ", Base64/binary>>
       }, 

@@ -14,7 +14,12 @@ start() ->
       asn1,
       public_key,
       ssl,
-      gun,
+      idna,
+      mimerl,
+      certifi,
+      ssl_verify_fun,
+      metrics,
+      hackney,
       wa
     ]).
 

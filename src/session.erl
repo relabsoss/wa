@@ -428,4 +428,4 @@ pass_social(Provider, Props, Req, State) ->
   {Req1, NewState}.
 
 socials_out(List) ->
-  {social, [maps:with([id, title], I) || I <- List]}.
+  {social, [maps:with([<<"id">>, <<"title">>], I) || I <- List]}.
