@@ -28,8 +28,11 @@ terminate(_Reason, _Req, _State) ->
 each(SPid, Req) ->
   {Path, Req1} = cowboy_req:path(Req),
   session:current(SPid, Path),
-  UI = session:user_info(SPid),
-  {#{ user => UI }, Req1}.
+  {#{ 
+      user => session:user_info(SPid),
+      recaptcha => maps:get(public, ?CONFIG(recaptcha, #{}), <<"...">>),
+      dadata => maps:get(key, ?CONFIG(dadata, #{}), <<"...">>)
+    }, Req1}.
 
 process(index, _PathInfo, _SPid, Context, Req) ->
   iomod:out_html(200, index_dtl, Context, Req);

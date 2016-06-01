@@ -1,10 +1,14 @@
 -module(recaptcha).
 -export([
+          check/2,
           check/3
         ]).
 
 -include("wa.hrl").
 -define(URL, "https://www.google.com/recaptcha/api/siteverify").
+
+check(IP, Values) ->
+  check(IP, Values, maps:get(private, ?CONFIG(recaptcha_key, #{}), <<"">>)).
 
 check(IP, Values, Key) ->
   ?INFO("Values ~p", [Values]),
