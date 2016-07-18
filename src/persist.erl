@@ -50,7 +50,7 @@ init_db(2, Pool) ->
           %
           % Social
           %
-          "DROP TABLE users_social;",
+          "DROP TABLE IF EXISTS users_social;",
           "CREATE TABLE users_social (
                   id varchar(256),
                   mail varchar(128),
@@ -69,13 +69,11 @@ init_db(3, Pool) ->
           %
           % Payments
           % 
-          "DROP TYPE payment_state CASCADE;",
-          "DROP TABLE payments;",
-          "CREATE TYPE payment_state AS ENUM('start', 'fail', 'success');",
+          "DROP TABLE IF EXISTS  payments;",
           "CREATE TABLE payments (
               id serial PRIMARY KEY,
               mail varchar(128),
-              state payment_state DEFAULT 'start',
+              state varchar(20) DEFAULT 'start',
               token varchar(128),
               token_reply jsonb,
               details_reply jsonb DEFAULT '{}',
